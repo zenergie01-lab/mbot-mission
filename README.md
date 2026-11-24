@@ -29,7 +29,7 @@ Suiveur de ligne (`readSensors()`) : 0 = les deux capteurs sur le noir, 1 = capt
 
 1. Dans Supabase Studio (SQL Editor), coller et exécuter `supabase/mbot_mission.sql`.
    Personnaliser à la fin du script le **code de classe** et le **nom de l'établissement**.
-2. Copier la clé **anon** du projet Supabase dans `config.js` (champ `cle`).
+2. Dans Vercel, définir `SUPABASE_URL` et `SUPABASE_ANON_KEY` : le relais `api/rpc.js` ajoute la clé côté serveur (pas de souci CORS, clé absente du code public).
 3. Donner le code de classe aux élèves : ils le saisissent sur l'écran d'accueil.
 
 Sans clé, le jeu fonctionne entièrement hors ligne (classement « Ce poste »).

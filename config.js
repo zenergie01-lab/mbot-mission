@@ -1,8 +1,4 @@
-// Configuration du classement en ligne (Supabase auto-hébergé).
-// La clé « anon » est publique par conception : elle ne donne accès
-// qu'aux 3 fonctions mbot_* créées par supabase/mbot_mission.sql.
-// Laisse « cle » vide pour désactiver le classement en ligne.
-window.MBOT_CONFIG = {
-  url: 'https://supabase.automatisationconsciente.fr',
-  cle: ''
-};
+// Classement en ligne : le jeu passe par le relais /api/rpc (fonction Vercel),
+// qui ajoute la clé Supabase côté serveur (variables SUPABASE_URL et SUPABASE_ANON_KEY).
+// Pour une version hors ligne (fichier ouvert sur le poste), mettre proxy: ''.
+window.MBOT_CONFIG = { proxy: '/api/rpc' };

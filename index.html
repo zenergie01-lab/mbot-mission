@@ -1249,7 +1249,7 @@ async function afficherClassement(){
     const rows=profilsLocaux().map(d=>({prenom:d.prenom,classe:d.classe,xp:d.xp||0,etoiles:Object.values(d.etoiles||{}).reduce((a,b)=>a+b,0),ceintures:CEINTURES.filter((c,k)=>NIVEAUX.filter(n=>n.ce===k).every(n=>((d.etoiles||{})[n.id]||0)>=1)).length,trophees:Object.keys(d.trophees||{}).length,couleur:(d.equip||{}).couleur})).sort((a,b)=>b.xp-a.xp);
     Z.innerHTML='<p class="aide">Tous les joueurs qui ont joué sur <b>cet ordinateur</b>.</p>'+tableClassement(rows); return;
   }
-  if(!CONF.url||!CONF.cle){ Z.innerHTML='<p class="aide">Le classement en ligne n\'est pas activé sur cette version (jeu hors ligne). Utilise l\'onglet « Ce poste ».</p>'; return; }
+  if(!enLigne()){ Z.innerHTML='<p class="aide">Le classement en ligne n\'est pas activé sur cette version (jeu hors ligne). Utilise l\'onglet « Ce poste ».</p>'; return; }
   if(!joueur.code){ Z.innerHTML='<p class="aide">Pour apparaître dans le classement en ligne, entre le <b>code de classe</b> donné par ton professeur (bouton ✏️ à côté de ton prénom).</p>'; return; }
   Z.innerHTML='<p class="aide">Chargement…</p>';
   try{ await synchroMaintenant(); const rows=await rpc('mbot_classement',{p_code:joueur.code}); let r=Array.isArray(rows)?rows:[];
@@ -1258,20 +1258,23 @@ async function afficherClassement(){
   }catch(e){ Z.innerHTML='<p class="aide">Classement en ligne injoignable pour le moment (pas d\'internet ?). Ta progression est gardée sur ce poste.</p>'; }
 }
 /* ---------- en ligne (Supabase, fonctions RPC) ---------- */
-const CONF=Object.assign({url:'',cle:''},window.MBOT_CONFIG||{});
+const CONF=Object.assign({url:'',cle:'',proxy:''},window.MBOT_CONFIG||{});
+const enLigne=()=>!!(CONF.proxy&&location.protocol.startsWith('http')||(CONF.url&&CONF.cle));
 async function rpc(fn,args){
-  const r=await fetch(CONF.url.replace(/\/$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:CONF.cle,Authorization:'Bearer '+CONF.cle,'Content-Type':'application/json'},body:JSON.stringify(args)});
+  const r=CONF.proxy&&location.protocol.startsWith('http')
+    ? await fetch(CONF.proxy+'?fn='+encodeURIComponent(fn),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)})
+    : await fetch(CONF.url.replace(/\/$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:CONF.cle,Authorization:'Bearer '+CONF.cle,'Content-Type':'application/json'},body:JSON.stringify(args)});
   if(!r.ok) throw new Error('HTTP '+r.status); return r.json();
 }
 let synchroT=null;
 function etatLigne(t){ const z=$('#hLigne'); if(z){ z.textContent=t; } }
 async function synchroMaintenant(){
-  if(!CONF.url||!CONF.cle||!joueur.code||!joueur.prenom) return;
+  if(!enLigne()||!joueur.code||!joueur.prenom) return;
   try{ const r=await rpc('mbot_envoyer',{p_code:joueur.code,p_prenom:joueur.prenom,p_classe:joueur.classe,p_xp:joueur.xp,p_etoiles:totalEtoiles(),p_ceintures:nbCeintures(),p_trophees:Object.keys(joueur.trophees).length,p_couleur:joueur.equip.couleur,p_chapeau:joueur.equip.chapeau});
     etatLigne(r==='ok'?'🌐':r==='code_inconnu'?'⚠️ code':'⚠️'); if(r==='code_inconnu') toast('Code de classe inconnu : vérifie-le avec ton professeur.');
   }catch(e){ etatLigne('📴'); }
 }
-function planifierSynchro(){ if(!CONF.url||!CONF.cle||!joueur.code) return; clearTimeout(synchroT); synchroT=setTimeout(synchroMaintenant,2500); }
+function planifierSynchro(){ if(!enLigne()||!joueur.code) return; clearTimeout(synchroT); synchroT=setTimeout(synchroMaintenant,2500); }
 /* ---------- dessin des accessoires ---------- */
 function couleurCorps(R){ const sk=R.skin; if(!sk) return R.coul; const o=BOUTIQUE.find(b=>b.id===sk.couleur); return o?o.val:R.coul; }
 function dessinerTrainee(c,cs,R){
