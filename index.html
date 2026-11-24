@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mBot Mission — programme ton robot</title>
+<style>
+:root{--ink:#1e293b;--mv:#4c97ff;--lk:#9966ff;--ct:#ffab19;--ev:#ffbf00;--fond:#f1f5f9;--ok:#16a34a;--ko:#dc2626}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:'Segoe UI',Verdana,sans-serif;color:var(--ink);background:#e2e8f0}
+button{font:inherit;cursor:pointer}
+header{display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1e293b;color:#fff;flex-wrap:wrap}
+header h1{font-size:20px;margin:0 8px 0 0;white-space:nowrap}
+header .nav button{background:#334155;color:#fff;border:0;border-radius:8px;padding:6px 12px}
+header .nav button.on{background:#fbbf24;color:#1e293b;font-weight:700}
+header .who{margin-left:auto;font-size:13px;display:flex;gap:8px;align-items:center}
+.ceint{display:inline-flex;gap:3px}.ceint i{width:16px;height:10px;border-radius:3px;border:1px solid #64748b;opacity:.25}.ceint i.on{opacity:1}
+.ecran{display:none;padding:10px 12px}.ecran.on{display:block}
+/* accueil */
+.accueil{max-width:720px;margin:4vh auto;background:#fff;border-radius:18px;padding:24px 28px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+.accueil h2{margin:0 0 8px;font-size:28px}
+.accueil label{display:block;margin:10px 0 4px;font-weight:700}
+.accueil input{font:inherit;font-size:18px;padding:8px 12px;border:2px solid #cbd5e1;border-radius:10px;width:100%}
+.gros{font-size:18px;font-weight:800;border:0;border-radius:12px;padding:12px 22px;background:#4f46e5;color:#fff}
+.btn{border:0;border-radius:10px;padding:8px 14px;background:#e2e8f0;color:#1e293b;font-weight:600}
+.btn.p{background:#4f46e5;color:#fff}.btn.v{background:#16a34a;color:#fff}.btn.r{background:#dc2626;color:#fff}.btn.o{background:#f59e0b;color:#1e293b}
+.btn:disabled{opacity:.45;cursor:default}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.modes div{background:var(--fond);border-radius:12px;padding:10px;font-size:14px}
+.modes b{display:block;font-size:16px;margin-bottom:3px}
+/* carte des niveaux */
+.ceinture{background:#fff;border-radius:14px;margin:0 auto 10px;max-width:1100px;padding:8px 12px;border-left:14px solid var(--c)}
+.ceinture h3{margin:0 0 6px;font-size:17px;display:flex;gap:10px;align-items:center}
+.ceinture h3 small{font-weight:500;color:#64748b;font-size:13px}
+.tuiles{display:flex;gap:10px;flex-wrap:wrap}
+.tuile{width:170px;border:2px solid #cbd5e1;border-radius:12px;padding:8px 10px;background:#f8fafc;text-align:left}
+.tuile b{display:block;font-size:15px}.tuile span{font-size:12.5px;color:#475569}
+.tuile .et{font-size:18px;letter-spacing:2px;color:#f59e0b;margin-top:3px}
+.tuile.lock{opacity:.45;cursor:not-allowed}
+.tuile:not(.lock):hover{border-color:#4f46e5}
+/* jeu */
+.jeu{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:12px;align-items:start}
+.panneau{background:#fff;border-radius:14px;padding:10px 12px}
+.titreN{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.titreN h2{margin:0;font-size:21px}
+.pastille{border-radius:99px;padding:2px 10px;font-size:12px;font-weight:800;background:var(--c);color:var(--t,#1e293b)}
+.consigne{font-size:15px;margin:6px 0;line-height:1.35}
+.analogie{font-size:13.5px;background:#f8fafc;border-left:5px solid #a5b4fc;padding:5px 10px;border-radius:6px;margin:4px 0}
+.taches{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;font-weight:600;margin:4px 0}
+.taches .ok{color:var(--ok)}
+.plateau{position:relative;display:flex;justify-content:center;margin-top:6px}
+canvas{display:block;border-radius:10px;background:#cbd5e1;max-width:100%}
+.barre{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.bascule{display:inline-flex;border-radius:10px;overflow:hidden;border:2px solid #4f46e5}
+.bascule button{border:0;padding:7px 12px;background:#fff;color:#4f46e5;font-weight:700}
+.bascule button.on{background:#4f46e5;color:#fff}
+.msg{min-height:30px;margin-top:8px;padding:7px 12px;border-radius:10px;font-size:15px;font-weight:600;background:var(--fond)}
+.msg.ok{background:#dcfce7;color:#14532d}.msg.ko{background:#fee2e2;color:#7f1d1d}.msg.info{background:#e0e7ff;color:#312e81}
+.touches{font-size:13px;color:#475569;margin-top:6px;line-height:1.6}
+kbd{display:inline-block;border:1.5px solid #94a3b8;border-bottom-width:3px;border-radius:5px;padding:0 6px;font-family:inherit;font-size:12px;background:#fff}
+/* éditeur */
+.ed h3{margin:4px 0;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.palette{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.palette button{border:2px solid var(--k);background:color-mix(in srgb,var(--k) 18%,#fff);border-radius:8px;padding:4px 8px;font-size:13px;font-weight:700;color:#1e293b}
+.palette button:hover{background:color-mix(in srgb,var(--k) 35%,#fff)}
+.prog{min-height:120px;max-height:52vh;overflow:auto;border:2px dashed #cbd5e1;border-radius:10px;padding:5px;background:#fafafa}
+.prog.vide::after{content:"Clique sur un bloc pour l'ajouter ici.";color:#94a3b8;font-size:14px;display:block;padding:20px;text-align:center}
+.bl{display:flex;align-items:center;gap:5px;border-left:7px solid var(--k);background:color-mix(in srgb,var(--k) 14%,#fff);border-radius:7px;padding:3px 5px;margin:3px 0;font-size:14px;font-weight:600}
+.bl .num{color:#94a3b8;font-size:11px;width:18px;text-align:right}
+.bl .lab{flex:1;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.bl input{width:44px;font:inherit;font-size:14px;padding:0 3px;border:1.5px solid #94a3b8;border-radius:5px;text-align:center}
+.bl select{font:inherit;font-size:13px;border:1.5px solid #94a3b8;border-radius:5px}
+.bl .x{border:0;background:transparent;font-size:13px;padding:0 3px;color:#475569}
+.bl.sel{outline:2px solid #4f46e5}
+.bl.run{background:#fde68a;outline:2px solid #f59e0b}
+.bl.err{background:#fecaca;outline:2px solid #dc2626}
+.bl.drag{opacity:.4}
+.compte{font-size:13px;color:#475569}
+.compte b.ok{color:var(--ok)}.compte b.ko{color:var(--ko)}
+.erreurs{color:var(--ko);font-size:13px;font-weight:600;margin-top:4px}
+.aide{font-size:13px;color:#475569}
+.indices{margin-top:6px}.indices div{background:#fffbeb;border:1.5px dashed #f59e0b;border-radius:8px;padding:5px 8px;font-size:13.5px;margin:4px 0}
+/* duel */
+.duel{display:grid;grid-template-columns:330px minmax(0,1fr) 330px;gap:10px;align-items:start}
+.joueur h3{margin:0 0 4px}
+.score{font-size:30px;font-weight:900;text-align:center}
+/* atelier */
+.atelier{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;align-items:start}
+.pinceaux{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pinceaux button{border:2px solid #cbd5e1;border-radius:8px;background:#fff;padding:5px;text-align:left;font-size:13px}
+.pinceaux button.on{border-color:#4f46e5;background:#eef2ff;font-weight:700}
+textarea{width:100%;font:12px monospace;min-height:70px;border-radius:8px;border:1.5px solid #cbd5e1;padding:6px}
+/* modale */
+.modale{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:20}
+.modale.on{display:flex}
+.modale .boite{background:#fff;border-radius:16px;max-width:760px;width:92vw;max-height:88vh;overflow:auto;padding:18px 22px}
+.modale pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:12px;font-size:14px;white-space:pre-wrap}
+.reglages{display:flex;gap:14px;flex-wrap:wrap;font-size:14px}.reglages input{width:70px;font:inherit}
+.victoire{font-size:26px;font-weight:900;text-align:center}
+.etoiles{font-size:40px;text-align:center;color:#f59e0b;letter-spacing:6px}
+/* v2 : gamification */
+.badgeJ{display:flex;align-items:center;gap:8px;background:#334155;border-radius:10px;padding:3px 10px}
+.badgeJ .niv{font-weight:800;color:#fbbf24;font-size:13px;white-space:nowrap}
+.xpbar{width:90px;height:9px;border-radius:9px;background:#0f172a;overflow:hidden;position:relative}.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#facc15);border-radius:9px;transition:width .5s}
+.badgeJ small{font-size:11px;color:#cbd5e1;white-space:nowrap}.badgeJ .b{font-weight:800;white-space:nowrap}
+#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:40;pointer-events:none}
+.toast{background:#1e293b;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px;min-width:220px;display:flex;gap:10px;align-items:center;animation:entre .35s ease-out;transition:opacity .5s,transform .5s}
+.toast.xp{border-left:6px solid #22c55e}.toast.lvl{border-left:6px solid #facc15;font-size:16px}.toast.tro{border-left:6px solid #a855f7;background:#2e1065}
+.toast.out{opacity:0;transform:translateX(40px)}
+@keyframes entre{from{transform:translateY(30px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.vitrine{display:grid;grid-template-columns:320px minmax(0,1fr);gap:12px;align-items:start}
+.rayon h3{margin:6px 0}.objets{display:flex;flex-wrap:wrap;gap:8px}
+.objet{width:130px;border:2px solid #cbd5e1;border-radius:12px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left}
+.objet i{width:28px;height:14px;border-radius:5px;border:1px solid #64748b}.objet b{font-size:14px}.objet span{font-size:13px;color:#475569}
+.objet.eq{border-color:#16a34a;background:#f0fdf4}.objet.achat span{color:#b45309;font-weight:800}
+.trophs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.troph{border:2px solid #e2e8f0;border-radius:14px;padding:10px;background:#f8fafc;display:flex;flex-direction:column;gap:3px;opacity:.6}
+.troph span{font-size:30px}.troph small{color:#475569}.troph.ok{opacity:1;border-color:#a855f7;background:#faf5ff}
+table.clt{width:100%;border-collapse:collapse;font-size:15px}table.clt th,table.clt td{padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:left}
+table.clt .num{text-align:right;white-space:nowrap}table.clt tr.moi td{background:#fef9c3;font-weight:700}table.clt .rang{font-size:18px;width:40px}
+.av{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px}
+.defi{max-width:1100px;margin:0 auto 10px;background:linear-gradient(90deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:14px;padding:8px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:15px}
+.rgpd{font-size:13px;color:#475569;background:#f8fafc;border-radius:10px;padding:8px 12px;margin-top:10px}
+@media (max-width:1000px){.jeu,.duel,.atelier,.vitrine{grid-template-columns:1fr}}
+</style></head><body>
+
+<header>
+  <h1>🤖 mBot Mission</h1>
+  <div class="nav" id="nav">
+    <button data-e="niveaux">Niveaux</button>
+    <button data-e="duel">Duel 2 joueurs</button>
+    <button data-e="atelier">Atelier</button>
+    <button data-e="garage">🛠 Garage</button>
+    <button data-e="trophees">🏆 Trophées</button>
+    <button data-e="classement">📊 Classement</button>
+    <button data-e="aide">Aide</button>
+  </div>
+  <div class="who"><div class="badgeJ" id="badgeJ" style="display:none"><span class="niv" id="hNiv"></span><span class="xpbar"><i id="hXp"></i></span><small id="hXpT"></small><span class="b" id="hBoulons"></span><span id="hLigne" title="Classement en ligne"></span></div><span id="quiNom" title="Modifier mon profil" style="cursor:pointer"></span><span class="ceint" id="ceintures"></span><button class="btn" id="bBilan" title="Télécharger mon bilan">💾 Bilan</button><button class="btn" id="bProf">Prof</button></div>
+</header>
+
+<!-- ACCUEIL -->
+<section class="ecran on" id="e-accueil"><div class="accueil">
+  <h2>Programme ton mBot</h2>
+  <p>Dans ce jeu, tu pilotes un mBot virtuel, puis tu le <b>programmes</b> avec des blocs, comme dans mBlock. Chaque niveau réussi te rapproche de la ceinture noire.</p>
+  <label for="iPrenom">Prénom + initiale du nom</label><input id="iPrenom" autocomplete="off" maxlength="20" placeholder="ex. Léa M.">
+  <label for="iClasse">Classe</label><input id="iClasse" autocomplete="off" maxlength="12" placeholder="ex. 3_GOYA">
+  <label for="iEtab">Établissement</label><input id="iEtab" autocomplete="off" maxlength="40" placeholder="ex. Collège de Kourou">
+  <label for="iCode">Code de classe <small style="font-weight:400">(donné par ton prof, pour le classement en ligne — facultatif)</small></label><input id="iCode" autocomplete="off" maxlength="30">
+  <p style="margin-top:16px"><button class="gros" id="bEntrer">C'est parti !</button></p>
+  <div class="modes">
+    <div><b>🎮 Télécommande</b>Tu pilotes avec les flèches du clavier. Pour découvrir le circuit.</div>
+    <div><b>🧩 Programme</b>Tu écris toute la recette à l'avance. Le robot l'exécute seul.</div>
+    <div><b>⚔️ Duel</b>À deux sur le même circuit : le plus rapide, ou le programme le plus court.</div>
+  </div>
+  <div class="rgpd">🔒 <b>Tes données</b> : seulement ton prénom avec l'initiale, ta classe et ton établissement. Pas de nom de famille, pas d'e-mail, pas de mot de passe. <a href="#" id="lienRgpd">En savoir plus</a></div>
+</div></section>
+
+<!-- NIVEAUX -->
+<section class="ecran" id="e-niveaux"><div id="carteNiveaux"></div></section>
+
+<!-- JEU -->
+<section class="ecran" id="e-jeu"><div class="jeu">
+  <div class="panneau">
+    <div class="titreN"><span class="pastille" id="nCeinture"></span><h2 id="nTitre"></h2><button class="btn" id="bVariante" title="Voir un autre circuit possible">🔀 Autre circuit</button><button class="btn" id="bRetour">← Niveaux</button></div>
+    <div class="consigne" id="nConsigne"></div>
+    <div class="analogie" id="nAnalogie"></div>
+    <div class="taches" id="nTaches"></div>
+    <div class="plateau"><canvas id="cv"></canvas></div>
+    <div class="barre">
+      <span class="bascule"><button id="mTele">🎮 Télécommande</button><button id="mProg" class="on">🧩 Programme</button></span>
+      <span id="ctrlProg" style="display:inline-flex;gap:6px;flex-wrap:wrap">
+        <button class="btn v" id="bLancer">▶ Lancer</button><button class="btn" id="bPas">⏭ Pas à pas</button><button class="btn r" id="bStop">⏹ Stop</button>
+      </span>
+      <button class="btn" id="bReset">↺ Remettre au départ</button>
+      <label style="font-size:13px">Vitesse <input type="range" id="vitesse" min="1" max="5" value="3"></label>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="touches" id="touches" style="display:none">
+      <kbd>↑</kbd> avancer · <kbd>↓</kbd> reculer · <kbd>←</kbd> <kbd>→</kbd> tourner · <kbd>1</kbd> LED rouge <kbd>2</kbd> verte <kbd>3</kbd> bleue <kbd>4</kbd> blanche <kbd>0</kbd> éteinte · <kbd>Espace</kbd> bip · <kbd>Entrée</kbd> attendre
+      <br><button class="btn o" id="bGestes">🧩 Transformer mes gestes en programme</button>
+    </div>
+  </div>
+  <div class="panneau ed" id="edJeu"></div>
+</div></section>
+
+<!-- DUEL -->
+<section class="ecran" id="e-duel">
+  <div class="panneau" style="margin-bottom:10px">
+    <div class="barre" style="margin:0">
+      <b>Circuit :</b><select id="dCarte" class="btn"></select>
+      <span class="bascule"><button id="dTele" class="on">🎮 Course télécommande</button><button id="dProg">🧩 Duel de programmes</button></span>
+      <button class="btn v" id="dGo">▶ Départ</button><button class="btn" id="dReset">↺ Recommencer</button>
+      <span class="aide" id="dRegle"></span>
+    </div>
+  </div>
+  <div class="duel">
+    <div class="panneau joueur" id="dJ1"></div>
+    <div class="panneau"><div class="plateau"><canvas id="cvD"></canvas></div><div class="msg" id="dMsg"></div></div>
+    <div class="panneau joueur" id="dJ2"></div>
+  </div>
+</section>
+
+<!-- ATELIER -->
+<section class="ecran" id="e-atelier"><div class="atelier">
+  <div class="panneau">
+    <h2 style="margin:0 0 4px">Atelier de circuits</h2>
+    <p class="aide" style="margin:0 0 6px">Dessine ton circuit, puis teste-le. Ensuite, construis-le au sol pour le vrai mBot ! Clique sur la case de départ pour tourner le robot.</p>
+    <div class="plateau"><canvas id="cvA"></canvas></div>
+  </div>
+  <div class="panneau">
+    <h3 style="margin:0 0 6px">Pinceaux</h3>
+    <div class="pinceaux" id="pinceaux"></div>
+    <div style="margin-top:8px;font-size:14px">
+      <label><input type="checkbox" id="aLigne"> Le robot doit rester sur la ligne</label><br>
+      <label><input type="checkbox" id="aVert"> LED verte obligatoire hors tunnel</label>
+    </div>
+    <div class="barre"><button class="btn v" id="aJouer">▶ Jouer ce circuit</button><button class="btn" id="aVider">🧽 Vider</button></div>
+    <h3 style="margin:10px 0 4px">Partager</h3>
+    <div class="barre" style="margin-top:0"><button class="btn" id="aCopier">📋 Copier le code</button><button class="btn" id="aCharger">📥 Charger un code</button></div>
+    <textarea id="aCode" placeholder="Le code du circuit apparaît ici. Colle ici le code d'un camarade puis clique sur Charger."></textarea>
+  </div>
+</div></section>
+
+<!-- GARAGE -->
+<section class="ecran" id="e-garage"><div class="vitrine">
+  <div class="panneau" style="text-align:center"><h2 style="margin:0">🛠 Mon garage</h2><p style="margin:4px 0">Tu as <b id="garageBoulons">0</b> 🔩 boulons</p><canvas id="cvG"></canvas><p class="aide">Gagne des boulons avec les étoiles, les trophées et le défi du jour. Survole un objet pour l'essayer.</p></div>
+  <div class="panneau" id="garageListe"></div>
+</div></section>
+<!-- TROPHÉES -->
+<section class="ecran" id="e-trophees"><div class="panneau" style="max-width:1100px;margin:0 auto"><h2 style="margin:0 0 8px">🏆 Mes trophées <small id="trophCompte" style="color:#64748b"></small></h2><p class="aide">Chaque trophée rapporte 50 🔩.</p><div class="trophs" id="trophListe"></div></div></section>
+<!-- CLASSEMENT -->
+<section class="ecran" id="e-classement"><div class="panneau" style="max-width:1100px;margin:0 auto">
+  <h2 style="margin:0 0 8px">📊 Classement</h2>
+  <div class="bascule" id="cltOnglets"><button data-o="classe">Ma classe</button><button data-o="etab">Mon établissement</button><button data-o="poste">Ce poste</button></div>
+  <div id="cltContenu" style="margin-top:10px"></div>
+  <p class="aide">Le classement compte l'XP : étoiles, niveaux réussis, trophées, défis. Pour gagner des places, raccourcis tes programmes !</p>
+</div></section>
+
+<!-- AIDE -->
+<section class="ecran" id="e-aide"><div class="accueil" style="max-width:900px">
+  <h2>Comment jouer</h2>
+  <p><b>1. Télécommande 🎮</b> : pilote le robot avec le clavier pour découvrir le circuit. Ensuite, clique sur « Transformer mes gestes en programme ».</p>
+  <p><b>2. Programme 🧩</b> : clique sur les blocs pour écrire le programme. Clique sur un bloc du programme pour le sélectionner : le prochain bloc s'ajoute juste après. Tu peux aussi glisser un bloc pour le déplacer.</p>
+  <p><b>3. Les étoiles</b> : ⭐ réussi · ⭐⭐ programme presque aussi court que celui du prof · ⭐⭐⭐ aussi court ou plus court.</p>
+  <p><b>Règles du circuit</b> :</p>
+  <ul>
+    <li>🧱 Mur : le robot s'arrête net s'il le touche.</li>
+    <li>🚧 Barrière de couleur : elle s'ouvre seulement si les LED du robot ont <b>la même couleur</b>.</li>
+    <li>↔ Passage étroit : impossible de tourner dedans. Utilise la <b>marche arrière</b>.</li>
+    <li>🔋 Pile : passe dessus pour la ramasser. 📦 Colis : arrête-toi dessus et fais <b>Bip</b> pour le livrer.</li>
+    <li>🚦 Feu : ne passe pas au rouge. 🌑 Tunnel : allume les LED en <b>blanc</b> pour y entrer.</li>
+    <li>⬛ Ligne noire : dans certains niveaux, le robot ne doit pas la quitter.</li>
+  </ul>
+  <p><b>Les blocs ont les mêmes noms que les cartes en papier</b>. Le bouton « Pour le vrai mBot » traduit ton programme en blocs mBlock, avec des durées à régler.</p>
+  <p><b>Duel</b> : course à la télécommande (<kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd> + <kbd>A</kbd><kbd>E</kbd><kbd>R</kbd> pour les LED contre les flèches + <kbd>K</kbd><kbd>L</kbd><kbd>M</kbd>), ou duel de programmes avec un nombre de blocs limité.</p>
+</div></section>
+
+<div id="toasts"></div>
+<!-- MODALE -->
+<div class="modale" id="modale"><div class="boite" id="mBoite"></div></div>
+
+<script src="config.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   RÉGLAGES (modifiables par le professeur)
+   ========================================================= */
+const CODE_PROF = 'mbot';          // code pour tout débloquer
+const TICK_MAX = 600;              // sécurité : nombre maximum d'actions
+const ITER_MAX = 4000;             // sécurité : tours de boucle sans action
+
+/* =========================================================
+   OUTILS
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const DIRS = [[0,-1],[1,0],[0,1],[-1,0]];   // N E S O
+const COULEURS = {rouge:'#ef4444', vert:'#22c55e', bleu:'#3b82f6', blanc:'#ffffff', 'éteint':'#334155'};
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){ return null; } }
+let audio=null;
+function son(f,d,type){ try{ audio=audio||new (window.AudioContext||window.webkitAudioContext)(); const o=audio.createOscillator(),g=audio.createGain(); o.type=type||'square'; o.frequency.value=f; g.gain.value=.06; o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime+d); }catch(e){} }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function labyrinthe(seed){
+  const W=11,H=9,r=mulberry32(seed),g=[];
+  for(let y=0;y<H;y++) g.push(Array(W).fill('#'));
+  const st=[[1,1]]; g[1][1]='.';
+  while(st.length){
+    const [x,y]=st[st.length-1];
+    const v=[[2,0],[-2,0],[0,2],[0,-2]].map(([dx,dy])=>[x+dx,y+dy,dx,dy]).filter(([nx,ny])=>nx>0&&ny>0&&nx<W-1&&ny<H-1&&g[ny][nx]==='#');
+    if(!v.length){ st.pop(); continue; }
+    const [nx,ny,dx,dy]=v[Math.floor(r()*v.length)];
+    g[y+dy/2][x+dx/2]='.'; g[ny][nx]='.'; st.push([nx,ny]);
+  }
+  g[1][1]='S'; g[7][9]='F';
+  return g.map(l=>l.join(''));
+}
+
+/* =========================================================
+   BLOCS ET CONDITIONS
+   ========================================================= */
+const BLOCS = {
+  avancer:{k:'var(--mv)',lab:'Avancer de',n:1,suf:'case(s)'},
+  reculer:{k:'var(--mv)',lab:'Reculer de',n:1,suf:'case(s)'},
+  gauche:{k:'var(--mv)',lab:'Tourner à gauche ↺'},
+  droite:{k:'var(--mv)',lab:'Tourner à droite ↻'},
+  led:{k:'var(--lk)',lab:'LED en',c:'rouge'},
+  bip:{k:'var(--lk)',lab:'Bip ♪'},
+  attendre:{k:'var(--ct)',lab:'Attendre',n:1,suf:'temps'},
+  repeter:{k:'var(--ct)',lab:'Répéter',n:2,suf:'fois'},
+  jusqua:{k:'var(--ct)',lab:'Répéter jusqu\'à la sortie'},
+  si:{k:'var(--ct)',lab:'Si',cond:'obstacle',suf:'alors'},
+  sinon:{k:'var(--ct)',lab:'Sinon'},
+  fin:{k:'var(--ct)',lab:'Fin'}
+};
+const CONDS = {obstacle:'obstacle devant', murD:'mur à droite', murG:'mur à gauche', ligne:'ligne devant', ligneG:'ligne à gauche', ligneD:'ligne à droite', sombre:'zone sombre devant', feu:'feu rouge devant'};
+const B1=['avancer','gauche','droite'], B2=B1.concat(['reculer','led','bip']), B3=B2.concat(['repeter','fin']), B4=B3.concat(['attendre','jusqua','si','sinon']);
+
+/* =========================================================
+   NIVEAUX
+   Légende : # mur · o caisse · . sol · S départ · F sortie
+   r g b barrières · d tunnel · n étroit · p pile · P pile en passage étroit
+   c colis · l ligne noire · t feu tricolore
+   ========================================================= */
+const CEINTURES = [
+  {id:'blanche',nom:'Ceinture blanche',c:'#e5e7eb',sous:'Séquence : une action après l\'autre'},
+  {id:'jaune',nom:'Ceinture jaune',c:'#facc15',sous:'Marche arrière, LED et bip'},
+  {id:'orange',nom:'Ceinture orange',c:'#fb923c',sous:'Boucles : répéter'},
+  {id:'verte',nom:'Ceinture verte',c:'#22c55e',sous:'Capteurs et conditions : si… alors… sinon'},
+  {id:'bleue',nom:'Ceinture bleue',c:'#3b82f6',t:'#fff',sous:'Suivre une ligne'},
+  {id:'noire',nom:'Ceinture noire',c:'#111827',t:'#fff',sous:'Tout combiner'}
+];
+const LIGNE_A=['###########','#Sllll....#','#....l....#','#....lll..#','#......l..#','#..lllll..#','#..F......#','###########'];
+const LIGNE_B=['###########','#Sll......#','#..l..lllF#','#..l..l...#','#..llll...#','#.........#','#.........#','###########'];
+const LIGNE_C=['###########','#Slllll...#','#.....l...#','#.lllll...#','#.l.......#','#.llllllF.#','#.........#','###########'];
+const NIVEAUX = [
+ {id:'n1',ce:0,titre:'Premier pas',map:['#######','#S...F#','#######'],dir:1,blocs:B1,par:1,
+  consigne:'Amène le robot jusqu\'au drapeau 🏁.',
+  analogie:'Un programme, c\'est une recette : le robot fait exactement ce qui est écrit, rien de plus.',
+  indices:['Combien de cases entre le robot et le drapeau ? Compte-les.','Un seul bloc suffit : « Avancer de … cases ».']},
+ {id:'n2',ce:0,titre:'Le virage',map:['#######','#S..###','###.###','###..F#','#######'],dir:1,blocs:B1,par:5,
+  consigne:'Tourne au bon moment pour arriver au drapeau.',
+  analogie:'Tourner à droite, c\'est tourner à droite du robot, pas de toi ! Mets-toi à sa place.',
+  indices:['Le robot regarde vers la droite de l\'écran. Où est sa droite à lui ?','Avancer 2, tourner à droite, avancer 2, tourner à gauche, avancer 2.']},
+ {id:'n3',ce:0,titre:'Le zigzag',map:['#########','#S.######','##..#####','###..####','####...F#','#########'],dir:1,blocs:B1,par:13,
+  consigne:'Descends l\'escalier jusqu\'au drapeau.',
+  analogie:'Une suite d\'actions dans un ordre précis s\'appelle une séquence.',
+  indices:['Pilote d\'abord en mode Télécommande, puis transforme tes gestes en programme.','Le même groupe de 4 blocs revient plusieurs fois… retiens-le pour la ceinture orange !']},
+ {id:'n4',ce:1,titre:'La livraison',map:['########','#S..c..#','######.#','######F#','########'],dir:1,blocs:B2,par:5,
+  consigne:'Arrête-toi sur le colis 📦, fais Bip pour le livrer, puis va au drapeau.',
+  analogie:'Le buzzer est un actionneur : il agit en faisant un son.',
+  indices:['Le robot doit être SUR la case du colis quand il fait Bip.']},
+ {id:'n5',ce:1,titre:'Marche arrière',map:['#########','#S.nnnP##','##.######','##F######','#########'],dir:1,blocs:B2,par:4,
+  consigne:'Va chercher la pile 🔋 au fond du passage étroit, puis rejoins le drapeau.',
+  analogie:'Comme un camion dans une ruelle : on entre en avant, on ressort en marche arrière.',
+  indices:['Dans le passage étroit ↔, le robot ne peut pas tourner.','Avancer jusqu\'à la pile, puis Reculer jusqu\'à la sortie du passage.']},
+ {id:'n6',ce:1,titre:'La barrière rouge',map:['#########','#S..r..F#','#########'],dir:1,blocs:B2,par:2,
+  consigne:'La barrière 🚧 rouge s\'ouvre seulement pour un robot aux LED rouges.',
+  analogie:'Comme un badge de couleur : la bonne couleur ouvre la bonne porte.',
+  indices:['Allume les LED AVANT d\'arriver à la barrière.']},
+ {id:'n7',ce:1,titre:'Trois barrières',map:['###########','#S.r.g.b.F#','###########'],dir:1,blocs:B2,par:6,
+  consigne:'Rouge, puis verte, puis bleue : change de couleur au bon moment.',
+  analogie:'Le programme donne les ordres dans l\'ordre, comme un chef d\'orchestre.',
+  indices:['LED rouge, avancer 2, LED verte, avancer 2, LED bleue, avancer…']},
+ {id:'n8',ce:2,titre:'Le grand carré',map:['#######','#p...p#','#.###.#','#.###.#','#.###.#','#F...p#','#######'],dir:0,depart:[1,5],blocs:B3,par:3,
+  consigne:'Ramasse les 3 piles 🔋 et reviens au drapeau. Défi ⭐⭐⭐ : 3 blocs seulement (sans compter Fin).',
+  analogie:'Répéter, c\'est comme le refrain d\'une chanson : on l\'écrit une fois, on le chante plusieurs fois.',
+  indices:['Le carré a 4 côtés identiques : avancer 4 puis tourner.','Répéter 4 fois [ Avancer 4, Tourner à droite ] Fin.']},
+ {id:'n9',ce:2,titre:'L\'escalier',map:['###########','#S.########','##..#######','###..######','####..#####','#####..####','######.F###','###########'],dir:1,blocs:B3,par:6,
+  consigne:'Descends le grand escalier avec une boucle.',
+  analogie:'Une marche = avancer, tourner, avancer, tourner. Combien de marches ?',
+  indices:['Une marche : Avancer 1, Droite, Avancer 1, Gauche.','Répéter 5 fois une marche, puis Avancer 1.']},
+ {id:'n10',ce:2,titre:'Le péage',map:['################','#S.r.g.r.g.r.gF#','################'],dir:1,blocs:B3,par:6,
+  consigne:'Rouge, vert, rouge, vert… trouve le motif qui se répète.',
+  analogie:'Un motif qui revient = une boucle. C\'est le même travail qu\'un ouvrier sur une chaîne de montage.',
+  indices:['Le motif : LED rouge, avancer 2, LED verte, avancer 2.']},
+ {id:'n11',ce:3,titre:'Le couloir mystère',variantes:[
+   {map:['#########','#S......#','#######.#','#....F#.#','#.#####.#','#.......#','#########']},
+   {map:['#########','#S...####','####.####','####.####','#F...####','#########','#########']},
+   {map:['#########','#S.....##','######.##','##F....##','#########','#########','#########']}],
+  dir:1,blocs:B4,conds:['obstacle'],par:5,
+  consigne:'Le couloir change à chaque essai ! Le robot doit regarder devant lui. Ton programme doit marcher sur les 3 couloirs.',
+  analogie:'Le capteur à ultrasons, ce sont les yeux du robot. SI c\'est bloqué devant, ALORS il tourne. SINON, il avance.',
+  indices:['Le couloir tourne toujours à droite.','Répéter jusqu\'à la sortie [ Si obstacle devant alors Droite Sinon Avancer 1 Fin ] Fin.']},
+ {id:'n12',ce:3,titre:'Le feu tricolore',variantes:[{map:['#############','#S..t...t..F#','#############'],feu:0},{feu:2},{feu:4}],
+  dir:1,blocs:B4,conds:['feu','obstacle'],par:5,
+  consigne:'Ne passe jamais au rouge 🚦. Les feux ne sont pas synchronisés de la même façon à chaque essai.',
+  analogie:'Comme un piéton : SI le feu est rouge, ALORS j\'attends. SINON, je traverse.',
+  indices:['Attendre fait passer le temps sans bouger.','Répéter jusqu\'à la sortie [ Si feu rouge devant alors Attendre 1 Sinon Avancer 1 Fin ] Fin.']},
+ {id:'n13',ce:3,titre:'Le tunnel',variantes:[
+   {map:['#############','#S..ddd....F#','#############']},
+   {map:['#############','#S......dd.F#','#############']},
+   {map:['#############','#S.dddd.d..F#','#############']}],
+  dir:1,blocs:B4,conds:['sombre','obstacle'],par:6,vertDehors:true,ledDepart:'vert',
+  consigne:'Dans le tunnel 🌑, LED blanches. Dehors, LED vertes obligatoires (économie d\'énergie). Le tunnel change de place !',
+  analogie:'Les phares d\'une voiture : on les allume en entrant dans le tunnel, on les éteint en sortant.',
+  indices:['À chaque pas : regarde devant, choisis la couleur, puis avance d\'une case.','Répéter jusqu\'à la sortie [ Si zone sombre devant alors LED blanc Sinon LED vert Fin, Avancer 1 ] Fin.']},
+ {id:'n14',ce:4,titre:'Suis la ligne',variantes:[{map:LIGNE_A},{map:LIGNE_B},{map:LIGNE_C}],
+  dir:1,blocs:B4,conds:['ligne','ligneG','ligneD','obstacle'],par:8,ligne:true,surLigne:true,
+  consigne:'Le robot ne doit jamais quitter la ligne noire. La ligne change à chaque essai.',
+  analogie:'Le suiveur de ligne, ce sont deux petits yeux sous le robot : ils voient le noir et le blanc.',
+  indices:['Si la ligne continue devant, avance. Sinon, cherche-la à gauche ou à droite.','Répéter jusqu\'à la sortie [ Si ligne devant alors Avancer 1 Sinon ( Si ligne à gauche alors Gauche Sinon Droite Fin ) Fin ] Fin.']},
+ {id:'n15',ce:4,titre:'La ligne et le feu',variantes:[
+   {map:LIGNE_A.map((l,i)=>i===1?'#Sltll....#':l),feu:1},
+   {map:LIGNE_B.map((l,i)=>i===4?'#..lltl...#':l),feu:3},
+   {map:LIGNE_C.map((l,i)=>i===3?'#.lltll...#':l),feu:5}],
+  dir:1,blocs:B4,conds:['feu','ligne','ligneG','ligneD','obstacle'],par:11,ligne:true,surLigne:true,
+  consigne:'Suis la ligne ET respecte le feu rouge 🚦 posé sur la ligne.',
+  analogie:'Un conducteur fait deux choses : il suit la route et il regarde les feux.',
+  indices:['Commence par le feu : s\'il est rouge devant, attends. Sinon, suis la ligne comme au niveau précédent.']},
+ {id:'n16',ce:5,titre:'Le labyrinthe',variantes:[{map:labyrinthe(7)},{map:labyrinthe(21)},{map:labyrinthe(42)}],
+  dir:1,blocs:B4,conds:['obstacle','murD','murG'],par:9,
+  consigne:'Trouve une règle qui sort de N\'IMPORTE QUEL labyrinthe. Ton programme doit marcher sur les 3.',
+  analogie:'La règle de la main droite : garde toujours la main droite sur le mur, tu finiras par sortir.',
+  indices:['S\'il n\'y a pas de mur à droite : tourne à droite et avance.','Sinon : s\'il y a un obstacle devant, tourne à gauche. Sinon, avance.']},
+ {id:'n17',ce:5,titre:'Mission complète',map:['############','#S..r..c...#','#######.####','#Pnnn......#','#######F####','############'],dir:1,blocs:B4,conds:['obstacle'],par:10,
+  consigne:'Ouvre la barrière, livre le colis, récupère la pile au fond du passage étroit, et termine au drapeau.',
+  analogie:'Un vrai robot livreur fait tout ça : il ouvre, il livre, il recharge, il rentre.',
+  indices:['Écris d\'abord l\'algorithme en français sur un brouillon.','Pour la pile : avancer jusqu\'au bout, puis reculer.']}
+];
+NIVEAUX.forEach(n=>{ if(!n.variantes) n.variantes=[{map:n.map}]; let m=null; n.variantes.forEach(v=>{ if(v.map) m=v.map; else v.map=m; if(v.feu===undefined) v.feu=0; }); });
+
+const DUELS = [
+ {nom:'Face à face',map:['###########','#A...#...B#','#.#r###b#.#','#.#..F..#.#','#.........#','###########'],a:[1,1,1],b:[9,1,3],budget:6},
+ {nom:'Deux portes',map:['#############','#A....#....B#','#.###g#r###.#','#.#...F...#.#','#.#.#####.#.#','#...........#','#############'],a:[1,1,1],b:[11,1,3],budget:8},
+ {nom:'Les deux feux',map:['###########','#A..t.t..B#','#####.#####','#####F#####','###########'],a:[1,1,1],b:[9,1,3],budget:8,conds:['feu','obstacle']}
+];
+
+/* =========================================================
+   MONDE ET ROBOT
+   ========================================================= */
+function construireMonde(def, variante){
+  const v=def.variantes?def.variantes[variante||0]:def;
+  const g=v.map.map(l=>l.split(''));
+  const W=g[0].length,H=g.length, piles=new Set(), colis=new Set(); let start=null;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const c=g[y][x];
+    if(c==='S'){ start={x,y,d:def.dir}; }
+    if(c==='p'||c==='P') piles.add(x+','+y);
+    if(c==='c') colis.add(x+','+y);
+  }
+  if(def.depart) start={x:def.depart[0],y:def.depart[1],d:def.dir};
+  return {g,W,H,start,piles,colis,feu:v.feu||0,ligne:!!def.ligne,surLigne:!!def.surLigne,vertDehors:!!def.vertDehors,ledDepart:def.ledDepart||'éteint'};
+}
+function cel(M,x,y){ return (y<0||y>=M.H||x<0||x>=M.W)?'#':M.g[y][x]; }
+const estMur = c => c==='#'||c==='o';
+const estLigne = (M,c) => M.ligne && 'lSFt'.includes(c);
+const estEtroit = c => c==='n'||c==='P';
+function feuRouge(M,x,tick){ return ((tick+M.feu+x*2)%6)<3; }
+function nouveauRobot(M,x,y,d,nom,coul){ return {x,y,d,ang:d*90,led:M.ledDepart,ticks:0,got:new Set(),bip:new Set(),gagne:false,nom:nom||'',coul:coul||'#2563eb',anim:null,secoue:0,ondes:0}; }
+function autreA(autres,x,y){ return (autres||[]).some(o=>o.x===x&&o.y===y); }
+function gagne(M,R){ return cel(M,R.x,R.y)==='F' && [...M.piles].every(k=>R.got.has(k)) && [...M.colis].every(k=>R.bip.has(k)); }
+
+/* Une action élémentaire. Ne modifie rien si l'action échoue. */
+function agir(M,R,a,autres){
+  const res={ok:true,a};
+  if(a==='av'||a==='ar'){
+    const s=a==='av'?1:-1,[dx,dy]=DIRS[R.d],nx=R.x+dx*s,ny=R.y+dy*s,c=cel(M,nx,ny);
+    if(estMur(c)) return {ok:false,msg:'Bonk ! Le robot a touché un mur.'};
+    if(autreA(autres,nx,ny)) return {ok:false,bloque:true,msg:'Bloqué par l\'autre robot.'};
+    const bar={r:'rouge',g:'vert',b:'bleu'}[c];
+    if(bar && R.led!==bar) return {ok:false,msg:'Barrière fermée ! Allume les LED en '+bar+' pour l\'ouvrir.'};
+    if(c==='t' && feuRouge(M,nx,R.ticks)) return {ok:false,msg:'Feu rouge grillé ! Il fallait attendre.'};
+    if(c==='d' && R.led!=='blanc') return {ok:false,msg:'Trop sombre ! Allume les LED en blanc avant le tunnel.'};
+    if(M.vertDehors && c!=='d' && R.led!=='vert') return {ok:false,msg:'Hors du tunnel, les LED doivent être vertes.'};
+    if(M.surLigne && !estLigne(M,c)) return {ok:false,msg:'Le robot a perdu la ligne noire !'};
+    R.x=nx; R.y=ny;
+    if(c==='p'||c==='P'){ R.got.add(nx+','+ny); res.pile=true; }
+    return res;
+  }
+  if(a==='g'||a==='d'){
+    if(estEtroit(cel(M,R.x,R.y))) return {ok:false,msg:'Trop étroit pour tourner ici ! Utilise la marche arrière.'};
+    R.d=(R.d+(a==='d'?1:3))%4; R.ang+=a==='d'?90:-90; return res;
+  }
+  if(a.startsWith('led:')){ R.led=a.slice(4); return res; }
+  if(a==='bip'){ if(cel(M,R.x,R.y)==='c') { R.bip.add(R.x+','+R.y); res.livre=true; } return res; }
+  if(a==='att') return res;
+  return res;
+}
+function condition(M,R,nom,autres){
+  const [dx,dy]=DIRS[R.d], fx=R.x+dx, fy=R.y+dy, cf=cel(M,fx,fy);
+  const dr=DIRS[(R.d+1)%4], ga=DIRS[(R.d+3)%4];
+  const cd=cel(M,R.x+dr[0],R.y+dr[1]), cg=cel(M,R.x+ga[0],R.y+ga[1]);
+  switch(nom){
+    case 'obstacle': return estMur(cf)||autreA(autres,fx,fy);
+    case 'murD': return estMur(cd);
+    case 'murG': return estMur(cg);
+    case 'ligne': return estLigne(M,cf);
+    case 'ligneG': return estLigne(M,cg);
+    case 'ligneD': return estLigne(M,cd);
+    case 'sombre': return cf==='d';
+    case 'feu': return cf==='t' && feuRouge(M,fx,R.ticks);
+  }
+  return false;
+}
+
+/* =========================================================
+   COMPILATION ET EXÉCUTION
+   ========================================================= */
+function compiler(prog){
+  const racine=[],pile=[{liste:racine}],err=[];
+  prog.forEach((b,i)=>{
+    const cur=pile[pile.length-1];
+    if(b.t==='repeter'||b.t==='jusqua'||b.t==='si'){ const nd={...b,i,corps:[],sinon:[]}; cur.liste.push(nd); pile.push({nd,liste:nd.corps,branche:'corps'}); }
+    else if(b.t==='sinon'){ if(pile.length<2||cur.nd.t!=='si'||cur.branche!=='corps') err.push({i,msg:'Ligne '+(i+1)+' : « Sinon » doit suivre un « Si ».'}); else { cur.liste=cur.nd.sinon; cur.branche='sinon'; cur.nd.iSinon=i; } }
+    else if(b.t==='fin'){ if(pile.length<2) err.push({i,msg:'Ligne '+(i+1)+' : « Fin » en trop.'}); else { pile.pop().nd.iFin=i; } }
+    else cur.liste.push({...b,i});
+  });
+  for(let k=pile.length-1;k>0;k--){ const nd=pile[k].nd; err.push({i:nd.i,msg:'Ligne '+(nd.i+1)+' : il manque un bloc « Fin » pour « '+(nd.t==='si'?'Si':BLOCS[nd.t].lab)+' ».'}); }
+  return {arbre:racine,err};
+}
+function* executer(liste,M,R,ctx){ for(const nd of liste){ if(ctx.stop) return; yield* noeud(nd,M,R,ctx); } }
+function* prim(nd,M,R,ctx,a){
+  if(ctx.stop) return;
+  let res;
+  while(true){
+    res=agir(M,R,a,ctx.autres()); R.ticks++;
+    if(R.ticks>TICK_MAX){ ctx.stop=true; ctx.echec={i:nd.i,msg:'Le programme est trop long ou tourne en rond.'}; yield {i:nd.i,type:'echec',msg:ctx.echec.msg}; return; }
+    if(res.ok||!res.bloque) break;
+    yield {i:nd.i,type:'bloque',a};
+  }
+  if(!res.ok){ ctx.stop=true; ctx.echec={i:nd.i,msg:res.msg}; yield {i:nd.i,type:'echec',a,msg:res.msg}; return; }
+  yield {i:nd.i,type:'action',a,res};
+  if(gagne(M,R)){ R.gagne=true; ctx.stop=true; yield {i:nd.i,type:'gagne'}; }
+}
+function* noeud(nd,M,R,ctx){
+  const n=Math.max(0,Math.min(99,parseInt(nd.n)||0));
+  switch(nd.t){
+    case 'avancer': for(let k=0;k<n&&!ctx.stop;k++) yield* prim(nd,M,R,ctx,'av'); break;
+    case 'reculer': for(let k=0;k<n&&!ctx.stop;k++) yield* prim(nd,M,R,ctx,'ar'); break;
+    case 'gauche': yield* prim(nd,M,R,ctx,'g'); break;
+    case 'droite': yield* prim(nd,M,R,ctx,'d'); break;
+    case 'led': yield* prim(nd,M,R,ctx,'led:'+nd.c); break;
+    case 'bip': yield* prim(nd,M,R,ctx,'bip'); break;
+    case 'attendre': for(let k=0;k<n&&!ctx.stop;k++) yield* prim(nd,M,R,ctx,'att'); break;
+    case 'repeter': for(let k=0;k<n&&!ctx.stop;k++){ if(++ctx.iter>ITER_MAX){ yield* tropY(nd,ctx); return; } yield* executer(nd.corps,M,R,ctx); } break;
+    case 'jusqua': while(!R.gagne&&!ctx.stop){ if(++ctx.iter>ITER_MAX){ yield* tropY(nd,ctx); return; } const t0=R.ticks; yield* executer(nd.corps,M,R,ctx); if(R.ticks===t0 && ++ctx.vide>50){ yield* tropY(nd,ctx); return; } } break;
+    case 'si': if(condition(M,R,nd.cond,ctx.autres())) yield* executer(nd.corps,M,R,ctx); else yield* executer(nd.sinon,M,R,ctx); break;
+  }
+}
+function trop(nd,ctx){ ctx.stop=true; ctx.echec={i:nd.i,msg:'La boucle tourne en rond sans faire bouger le robot.'}; }
+function* tropY(nd,ctx){ trop(nd,ctx); yield {i:nd.i,type:'echec',msg:ctx.echec.msg}; }
+function nbBlocs(prog){ return prog.filter(b=>b.t!=='fin').length; }
+function etoiles(nb,par){ if(!par) return 3; return nb<=par?3:nb<=par+2?2:1; }
+/* simulation sans animation (vérification des variantes) */
+function simuler(def,variante,prog){
+  const M=construireMonde(def,variante), R=nouveauRobot(M,M.start.x,M.start.y,M.start.d);
+  const {arbre,err}=compiler(prog); if(err.length) return {ok:false,msg:err[0].msg};
+  const ctx={stop:false,iter:0,vide:0,autres:()=>[]}; const it=executer(arbre,M,R,ctx);
+  for(let s=it.next();!s.done;s=it.next()){}
+  return {ok:R.gagne,msg:ctx.echec?ctx.echec.msg:(R.gagne?'':'Programme terminé, mais la mission n\'est pas finie.'),ticks:R.ticks};
+}
+
+/* =========================================================
+   DESSIN
+   ========================================================= */
+function dessiner(cv,M,robots,opts){
+  opts=opts||{};
+  const box=cv.parentElement.getBoundingClientRect();
+  const maxW=Math.max(260,box.width-4), maxH=Math.max(220,window.innerHeight*(opts.h||0.52));
+  const cs=Math.floor(Math.min(maxW/M.W,maxH/M.H,72));
+  const dpr=window.devicePixelRatio||1, Wp=cs*M.W, Hp=cs*M.H;
+  if(cv.width!==Wp*dpr||cv.height!==Hp*dpr){ cv.width=Wp*dpr; cv.height=Hp*dpr; cv.style.width=Wp+'px'; cv.style.height=Hp+'px'; }
+  const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); cv._cs=cs;
+  const tick=opts.tick!==undefined?opts.tick:(robots[0]?robots[0].ticks:0);
+  for(let y=0;y<M.H;y++) for(let x=0;x<M.W;x++){
+    const ch=M.g[y][x],X=x*cs,Y=y*cs;
+    c.fillStyle=ch==='d'?'#1e1b4b':'#f8fafc'; c.fillRect(X,Y,cs,cs);
+    c.strokeStyle='#e2e8f0'; c.lineWidth=1; c.strokeRect(X+.5,Y+.5,cs-1,cs-1);
+    if(ch==='F'){ c.fillStyle='#dcfce7'; c.fillRect(X+2,Y+2,cs-4,cs-4); }
+    if(estLigne(M,ch)){ c.fillStyle='#111827'; const w=cs*0.34,o=(cs-w)/2; c.fillRect(X+o,Y+o,w,w);
+      if(estLigne(M,cel(M,x+1,y))) c.fillRect(X+cs/2,Y+o,cs/2,w); if(estLigne(M,cel(M,x-1,y))) c.fillRect(X,Y+o,cs/2,w);
+      if(estLigne(M,cel(M,x,y+1))) c.fillRect(X+o,Y+cs/2,w,cs/2); if(estLigne(M,cel(M,x,y-1))) c.fillRect(X+o,Y,w,cs/2); }
+    if(estMur(ch)){ c.fillStyle=ch==='o'?'#a16207':'#475569'; c.fillRect(X,Y,cs,cs); c.fillStyle='rgba(255,255,255,.12)'; c.fillRect(X+3,Y+3,cs-6,cs*0.25); continue; }
+    if(ch==='d'){ c.fillStyle='#fef9c3'; for(let k=0;k<3;k++){ c.fillRect(X+((k*37+x*13)%cs),Y+((k*23+y*17)%cs),2,2);} }
+    if(estEtroit(ch)){ const hor=!estMur(cel(M,x-1,y))||!estMur(cel(M,x+1,y)); c.fillStyle='#64748b';
+      if(hor){ c.fillRect(X,Y,cs,cs*0.18); c.fillRect(X,Y+cs*0.82,cs,cs*0.18);} else { c.fillRect(X,Y,cs*0.18,cs); c.fillRect(X+cs*0.82,Y,cs*0.18,cs);}
+      c.fillStyle='#94a3b8'; c.font='bold '+Math.round(cs*0.28)+'px sans-serif'; c.textAlign='center'; c.fillText(hor?'↔':'↕',X+cs/2,Y+cs*0.62); }
+    if(ch==='F'){ const q=cs/6; c.fillStyle='#fff'; c.fillRect(X+cs*0.3,Y+cs*0.2,q*2.8,q*2.1); c.strokeStyle='#111827'; c.lineWidth=1; c.strokeRect(X+cs*0.3,Y+cs*0.2,q*2.8,q*2.1); for(let i=0;i<4;i++)for(let j=0;j<3;j++) if((i+j)%2===0){ c.fillStyle='#111827'; c.fillRect(X+cs*0.3+i*q*0.7,Y+cs*0.2+j*q*0.7,q*0.7,q*0.7);} c.fillStyle='#78350f'; c.fillRect(X+cs*0.27,Y+cs*0.18,3,cs*0.65); }
+    if(ch==='p'||ch==='P'){ const pris=robots.some(R=>R.got.has(x+','+y)); if(!pris){ c.fillStyle='#16a34a'; c.fillRect(X+cs*0.35,Y+cs*0.3,cs*0.3,cs*0.45); c.fillRect(X+cs*0.43,Y+cs*0.24,cs*0.14,cs*0.07); c.fillStyle='#fff'; c.font='bold '+Math.round(cs*0.22)+'px sans-serif'; c.textAlign='center'; c.fillText('+',X+cs/2,Y+cs*0.6);} }
+    if(ch==='c'){ const ok=robots.some(R=>R.bip.has(x+','+y)); c.fillStyle=ok?'#bbf7d0':'#d6a35c'; c.fillRect(X+cs*0.2,Y+cs*0.25,cs*0.6,cs*0.5); c.strokeStyle='#78350f'; c.strokeRect(X+cs*0.2,Y+cs*0.25,cs*0.6,cs*0.5); c.fillStyle='#78350f'; c.font='bold '+Math.round(cs*0.2)+'px sans-serif'; c.textAlign='center'; c.fillText(ok?'✓':'BIP',X+cs/2,Y+cs*0.57); }
+    if('rgb'.includes(ch)){ const col={r:'#ef4444',g:'#22c55e',b:'#3b82f6'}[ch], nom={r:'rouge',g:'vert',b:'bleu'}[ch]; const ouvert=robots.some(R=>R.led===nom); c.fillStyle=col; c.globalAlpha=ouvert?.25:1;
+      const hor=!estMur(cel(M,x,y-1))||!estMur(cel(M,x,y+1)); for(let k=0;k<4;k++){ if(hor) c.fillRect(X+2,Y+cs*(0.12+k*0.22),cs-4,cs*0.1); else c.fillRect(X+cs*(0.12+k*0.22),Y+2,cs*0.1,cs-4);} c.globalAlpha=1;
+      c.fillStyle='#fff'; c.beginPath(); c.arc(X+cs/2,Y+cs/2,cs*0.16,0,7); c.fill(); c.fillStyle=col; c.beginPath(); c.arc(X+cs/2,Y+cs/2,cs*0.1,0,7); c.fill(); }
+    if(ch==='t'){ const rouge=feuRouge(M,x,tick); c.fillStyle='#1f2937'; c.fillRect(X+cs*0.32,Y+cs*0.12,cs*0.36,cs*0.76); c.fillStyle=rouge?'#ef4444':'#3f1d1d'; c.beginPath(); c.arc(X+cs/2,Y+cs*0.32,cs*0.12,0,7); c.fill(); c.fillStyle=rouge?'#14321f':'#22c55e'; c.beginPath(); c.arc(X+cs/2,Y+cs*0.68,cs*0.12,0,7); c.fill(); }
+  }
+  robots.forEach(R=>dessinerRobot(c,cs,R));
+  if(opts.depart){ const s=opts.depart; c.strokeStyle='#4f46e5'; c.lineWidth=3; c.setLineDash([5,4]); c.strokeRect(s.x*cs+3,s.y*cs+3,cs-6,cs-6); c.setLineDash([]); }
+}
+function poseAffichee(R){
+  const A=R.anim; if(!A) return {x:R.x,y:R.y,ang:R.ang};
+  const t=Math.min(1,(performance.now()-A.t0)/A.dur), e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  if(t>=1) R.anim=null;
+  return {x:A.x0+(R.x-A.x0)*e,y:A.y0+(R.y-A.y0)*e,ang:A.a0+(R.ang-A.a0)*e};
+}
+function dessinerRobot(c,cs,R){
+  const p=poseAffichee(R); let sx=0;
+  if(R.skin&&R.skin.trainee!=='aucune'){ R.trace=R.trace||[]; if(R.anim) R.trace.push({x:p.x,y:p.y,t:performance.now()}); dessinerTrainee(c,cs,R); }
+  if(R.secoue>performance.now()) sx=Math.sin(performance.now()/25)*cs*0.06;
+  c.save(); c.translate(p.x*cs+cs/2+sx,p.y*cs+cs/2); c.rotate(p.ang*Math.PI/180);
+  const s=cs*0.78,h=s/2;
+  c.fillStyle='#1f2937'; c.fillRect(-h-s*0.06,-s*0.22,s*0.14,s*0.5); c.fillRect(h-s*0.08,-s*0.22,s*0.14,s*0.5);
+  const cc=couleurCorps(R);
+  if(cc==='guyane'){ const gr=c.createLinearGradient(-h,-h,h,h); gr.addColorStop(.5,'#16a34a'); gr.addColorStop(.5,'#facc15'); c.fillStyle=gr; } else c.fillStyle=cc;
+  roundRect(c,-h+s*0.06,-h+s*0.08,s-s*0.12,s-s*0.12,s*0.14); c.fill();
+  if(cc==='guyane'){ c.fillStyle='#dc2626'; c.beginPath(); for(let k=0;k<10;k++){ const r=k%2?s*0.05:s*0.12,a=k*Math.PI/5-Math.PI/2; c.lineTo(Math.cos(a)*r,s*0.36+Math.sin(a)*r); } c.fill(); }
+  c.fillStyle='#0f766e'; roundRect(c,-h+s*0.2,-h+s*0.28,s*0.6,s*0.42,s*0.05); c.fill();
+  c.fillStyle='#e2e8f0'; roundRect(c,-s*0.28,-h-s*0.02,s*0.56,s*0.18,s*0.05); c.fill();
+  c.fillStyle='#94a3b8'; c.beginPath(); c.arc(-s*0.14,-h+s*0.07,s*0.07,0,7); c.arc(s*0.14,-h+s*0.07,s*0.07,0,7); c.fill();
+  const lc=COULEURS[R.led]||'#334155';
+  [-1,1].forEach(k=>{ if(R.led!=='éteint'){ c.fillStyle=lc; c.globalAlpha=.35; c.beginPath(); c.arc(k*s*0.24,-h+s*0.36,s*0.16,0,7); c.fill(); c.globalAlpha=1; }
+    c.fillStyle=lc; c.strokeStyle='#0f172a'; c.lineWidth=1.2; c.beginPath(); c.arc(k*s*0.24,-h+s*0.36,s*0.07,0,7); c.fill(); c.stroke(); });
+  dessinerChapeau(c,s,h,R);
+  if(R.nom){ c.rotate(-p.ang*Math.PI/180); c.fillStyle='#fff'; c.font='bold '+Math.round(cs*0.3)+'px sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(R.nom,0,s*0.1); c.textBaseline='alphabetic'; }
+  c.restore();
+  if(R.ondes>performance.now()){ c.strokeStyle='#9966ff'; c.lineWidth=3; const k=(R.ondes-performance.now())/400; for(let i=1;i<=2;i++){ c.globalAlpha=k; c.beginPath(); c.arc(p.x*cs+cs/2,p.y*cs+cs/2,cs*(0.45+i*0.15*(1-k)+i*0.1),0,7); c.stroke(); } c.globalAlpha=1; }
+}
+function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+function animer(R,avant,dur){ R.anim={x0:avant.x,y0:avant.y,a0:avant.ang,t0:performance.now(),dur}; }
+function effetAction(R,ev){
+  if(ev.type==='echec'){ R.secoue=performance.now()+450; son(110,.25,'sawtooth'); }
+  else if(ev.type==='bloque'){ R.secoue=performance.now()+250; son(160,.1); }
+  else if(ev.a==='bip'){ R.ondes=performance.now()+400; son(880,.15); }
+  else if(ev.res&&ev.res.pile) son(1200,.08,'triangle');
+  if(ev.type==='gagne'){ [523,659,784,1046].forEach((f,k)=>setTimeout(()=>son(f,.15,'triangle'),k*120)); }
+}
+
+/* =========================================================
+   ÉDITEUR DE PROGRAMME (réutilisé en duel)
+   ========================================================= */
+let uid=1;
+class Editeur{
+  constructor(el,opt){ this.el=el; this.opt=opt; this.prog=[]; this.sel=-1; this.render(); }
+  config(opt){ Object.assign(this.opt,opt); this.render(); }
+  nouveau(t){ const B=BLOCS[t],b={id:uid++,t}; if(B.n!==undefined) b.n=B.n; if(B.c) b.c=B.c; if(B.cond) b.cond=(this.opt.conds||['obstacle'])[0]; return b; }
+  ajouter(t){
+    if(this.opt.budget && nbBlocs(this.prog)>=this.opt.budget && t!=='fin') { this.flash('Plus de blocs disponibles (budget : '+this.opt.budget+').'); return; }
+    const b=this.nouveau(t), pos=this.sel>=0?this.sel+1:this.prog.length;
+    this.prog.splice(pos,0,b); this.sel=pos;
+    if((t==='repeter'||t==='jusqua'||t==='si') && this.opt.autoFin!==false){ this.prog.splice(pos+1,0,this.nouveau('fin')); }
+    this.changer();
+  }
+  charger(prog){ this.prog=prog.map(b=>({...b,id:uid++})); this.sel=this.prog.length-1; this.changer(); }
+  changer(){ this.render(); if(this.opt.onChange) this.opt.onChange(this); }
+  flash(m){ const e=this.el.querySelector('.erreurs'); if(e){ e.textContent=m; } }
+  marquer(i,cls){ this.el.querySelectorAll('.bl').forEach((d,k)=>{ d.classList.toggle('run',cls==='run'&&k===i); d.classList.toggle('err',cls==='err'&&k===i); }); if(i>=0){ const d=this.el.querySelectorAll('.bl')[i]; if(d) d.scrollIntoView({block:'nearest'}); } }
+  render(){
+    const o=this.opt, el=this.el, conds=o.conds||[];
+    const blocs=o.blocs||B4;
+    el.innerHTML='';
+    const h=document.createElement('h3'); h.innerHTML='<span>'+(o.titre||'🧩 Mon programme')+'</span>'; const bx=document.createElement('button'); bx.className='btn'; bx.textContent='🗑 Tout effacer'; bx.onclick=()=>{ const vider=()=>{ this.prog=[]; this.sel=-1; this.changer(); }; if(!this.prog.length) vider(); else confirmer('Effacer tout le programme ?',vider); }; h.appendChild(bx); el.appendChild(h);
+    const pal=document.createElement('div'); pal.className='palette';
+    blocs.forEach(t=>{ if(t==='si'&&!conds.length) return; const B=BLOCS[t], b=document.createElement('button'); b.style.setProperty('--k',B.k); b.textContent=(t==='avancer'?'↑ ':t==='reculer'?'↓ ':'')+B.lab.replace(' de','').replace(' en','')+(t==='si'?' … alors':''); b.onclick=()=>this.ajouter(t); pal.appendChild(b); });
+    el.appendChild(pal);
+    const L=document.createElement('div'); L.className='prog'+(this.prog.length?'':' vide');
+    let prof=0;
+    this.prog.forEach((b,i)=>{
+      if(b.t==='fin'||b.t==='sinon') prof=Math.max(0,prof-1);
+      const B=BLOCS[b.t], d=document.createElement('div'); d.className='bl'+(i===this.sel?' sel':''); d.style.setProperty('--k',B.k); d.style.marginLeft=(prof*18)+'px'; d.draggable=true;
+      const num=document.createElement('span'); num.className='num'; num.textContent=i+1; d.appendChild(num);
+      const lab=document.createElement('span'); lab.className='lab';
+      lab.appendChild(document.createTextNode(B.lab));
+      if(b.n!==undefined){ const inp=document.createElement('input'); inp.type='number'; inp.min=b.t==='repeter'?1:1; inp.max=20; inp.value=b.n; inp.onclick=e=>e.stopPropagation(); inp.onchange=()=>{ b.n=Math.max(1,Math.min(20,parseInt(inp.value)||1)); inp.value=b.n; this.changer(); }; lab.appendChild(inp); }
+      if(b.c){ const s=document.createElement('select'); Object.keys(COULEURS).forEach(k=>{ const op=document.createElement('option'); op.value=k; op.textContent=k; if(k===b.c) op.selected=true; s.appendChild(op); }); s.onclick=e=>e.stopPropagation(); s.onchange=()=>{ b.c=s.value; this.changer(); }; lab.appendChild(s); }
+      if(b.cond!==undefined){ const s=document.createElement('select'); (conds.length?conds:Object.keys(CONDS)).forEach(k=>{ const op=document.createElement('option'); op.value=k; op.textContent=CONDS[k]; if(k===b.cond) op.selected=true; s.appendChild(op); }); s.onclick=e=>e.stopPropagation(); s.onchange=()=>{ b.cond=s.value; this.changer(); }; lab.appendChild(s); }
+      if(B.suf) lab.appendChild(document.createTextNode(B.suf));
+      d.appendChild(lab);
+      [['▲',-1],['▼',1]].forEach(([t,s])=>{ const x=document.createElement('button'); x.className='x'; x.textContent=t; x.title=s<0?'Monter':'Descendre'; x.onclick=e=>{ e.stopPropagation(); const j=i+s; if(j<0||j>=this.prog.length) return; [this.prog[i],this.prog[j]]=[this.prog[j],this.prog[i]]; this.sel=j; this.changer(); }; d.appendChild(x); });
+      const x=document.createElement('button'); x.className='x'; x.textContent='✕'; x.title='Supprimer'; x.onclick=e=>{ e.stopPropagation(); this.prog.splice(i,1); this.sel=Math.min(i,this.prog.length-1); this.changer(); }; d.appendChild(x);
+      d.onclick=()=>{ this.sel=(this.sel===i?-1:i); this.render(); };
+      d.ondragstart=e=>{ this.dragI=i; d.classList.add('drag'); try{e.dataTransfer.setData('text/plain',String(i));}catch(_){} };
+      d.ondragend=()=>d.classList.remove('drag');
+      d.ondragover=e=>e.preventDefault();
+      d.ondrop=e=>{ e.preventDefault(); const a=this.dragI; if(a===undefined||a===i) return; const [m]=this.prog.splice(a,1); this.prog.splice(i,0,m); this.sel=i; this.dragI=undefined; this.changer(); };
+      if(b.t==='repeter'||b.t==='jusqua'||b.t==='si'||b.t==='sinon') prof++;
+      L.appendChild(d);
+    });
+    el.appendChild(L);
+    const nb=nbBlocs(this.prog), cpt=document.createElement('div'); cpt.className='compte';
+    let t='Blocs : <b class="'+(o.par&&nb<=o.par?'ok':'')+'">'+nb+'</b> (sans compter Fin)';
+    if(o.par) t+=' · objectif ⭐⭐⭐ : '+o.par+' blocs ou moins';
+    if(o.budget) t='Blocs : <b class="'+(nb>o.budget?'ko':'ok')+'">'+nb+' / '+o.budget+'</b>';
+    cpt.innerHTML=t; el.appendChild(cpt);
+    const er=document.createElement('div'); er.className='erreurs'; el.appendChild(er);
+    const c=compiler(this.prog); if(c.err.length) er.textContent='⚠ '+c.err[0].msg;
+    if(o.extra) o.extra(el);
+  }
+}
+
+/* =========================================================
+   PROGRESSION
+   ========================================================= */
+let joueur=Object.assign({prenom:'',classe:'',etab:'',code:'',prof:false},{etoiles:{},tele:{},xp:0,boulons:0,trophees:{},possede:['bleu','aucun','aucune'],equip:{couleur:'bleu',chapeau:'aucun',trainee:'aucune'},stats:{},defi:''});
+function cleJoueur(){ return 'mbotMission_'+joueur.etab+'_'+joueur.classe+'_'+joueur.prenom; }
+function sauver(){ if(!joueur.prenom) return; const {prof,...d}=joueur; store(cleJoueur(),JSON.stringify(d)); majEntete(); planifierSynchro(); }
+function charger(){ const base=profilVide(); let d={}; try{ d=JSON.parse(store(cleJoueur())||'{}')||{}; }catch(e){} const id={prenom:joueur.prenom,classe:joueur.classe,etab:joueur.etab,code:joueur.code,prof:joueur.prof}; Object.assign(joueur,base,d,id); if(!joueur.possede.includes('bleu')) joueur.possede.push('bleu','aucun','aucune'); }
+function debloque(i){ return joueur.prof||i===0||(joueur.etoiles[NIVEAUX[i-1].id]||0)>=1; }
+function ceintureObtenue(k){ return NIVEAUX.filter(n=>n.ce===k).every(n=>(joueur.etoiles[n.id]||0)>=1); }
+function majEntete(){
+  $('#quiNom').textContent=joueur.prenom?(joueur.prenom+(joueur.classe?' · '+joueur.classe:'')):'';
+  majJoueurBadge();
+  $('#ceintures').innerHTML=CEINTURES.map((c,k)=>'<i title="'+c.nom+'" class="'+(ceintureObtenue(k)?'on':'')+'" style="background:'+c.c+'"></i>').join('');
+}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+let ecranCourant='accueil';
+function montrer(e){ ecranCourant=e; document.querySelectorAll('.ecran').forEach(s=>s.classList.toggle('on',s.id==='e-'+e)); document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.e===e||(e==='jeu'&&b.dataset.e==='niveaux'))); if(e==='niveaux') afficherCarte(); if(e==='duel') duelInit(); if(e==='atelier') atelierInit(); if(e==='garage') afficherGarage(); if(e==='trophees') afficherTrophees(); if(e==='classement') afficherClassement(); arreter(); }
+document.querySelectorAll('#cltOnglets button').forEach(b=>b.onclick=()=>{ ongletClt=b.dataset.o; afficherClassement(); });
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ if(!joueur.prenom&&b.dataset.e!=='aide'){ montrer('accueil'); return; } montrer(b.dataset.e); });
+$('#bEntrer').onclick=()=>{ const p=$('#iPrenom').value.trim().replace(/\s+/g,' '); if(!p){ $('#iPrenom').focus(); return; }
+  joueur.prenom=p; joueur.classe=$('#iClasse').value.trim().toUpperCase(); joueur.etab=$('#iEtab').value.trim(); joueur.code=$('#iCode').value.trim().toUpperCase();
+  store('mbotDernier',JSON.stringify({prenom:joueur.prenom,classe:joueur.classe,etab:joueur.etab,code:joueur.code}));
+  charger(); sauver(); majEntete(); montrer('niveaux'); toast('Bienvenue '+esc(p)+' ! Niveau '+niveauDe(joueur.xp)+' · '+titreDe(niveauDe(joueur.xp)),'xp'); synchroMaintenant(); };
+try{ const d=JSON.parse(store('mbotDernier')||'null'); if(d){ $('#iPrenom').value=d.prenom||''; $('#iClasse').value=d.classe||''; $('#iEtab').value=d.etab||''; $('#iCode').value=d.code||''; } }catch(e){}
+$('#iEtab').onkeydown=e=>{ if(e.key==='Enter') $('#iCode').focus(); };
+$('#iCode').onkeydown=e=>{ if(e.key==='Enter') $('#bEntrer').click(); };
+$('#quiNom').onclick=()=>montrer('accueil');
+$('#lienRgpd').onclick=e=>{ e.preventDefault(); modale('<h2 style="margin-top:0">🔒 Tes données dans mBot Mission</h2><ul style="line-height:1.5"><li><b>Ce qui est enregistré</b> : ton prénom avec l\'initiale du nom, ta classe, ton établissement, tes points, étoiles, trophées et l\'apparence de ton robot.</li><li><b>Où</b> : sur cet ordinateur (mémoire du navigateur). Si tu entres un code de classe, ton prénom, ta classe et tes points sont aussi envoyés au classement de ton établissement, sur un serveur hébergé en Europe et géré par ton professeur.</li><li><b>Pourquoi</b> : afficher ta progression et le classement de la classe. Aucune publicité, aucun suivi.</li><li><b>Combien de temps</b> : jusqu\'à la fin de l\'année scolaire, puis tout est effacé.</li><li><b>Tes droits</b> : tu peux demander à ton professeur de corriger ou d\'effacer tes données à tout moment. Sans code de classe, rien ne quitte l\'ordinateur.</li></ul><p style="text-align:right"><button class="btn p" onclick="fermerModale()">J\'ai compris</button></p>'); };
+$('#iPrenom').onkeydown=e=>{ if(e.key==='Enter') $('#iClasse').focus(); };
+$('#iClasse').onkeydown=e=>{ if(e.key==='Enter') $('#bEntrer').click(); };
+$('#bProf').onclick=()=>demander('Code professeur :',c=>{ if(c===CODE_PROF){ joueur.prof=true; info('Tous les niveaux sont débloqués pour cette session.'); if(ecranCourant==='niveaux') afficherCarte(); } else info('Code incorrect.'); });
+
+function afficherCarte(){
+  const C=$('#carteNiveaux'); C.innerHTML='';
+  const dj=defiDuJour(); if(dj!==null){ const fait=joueur.defi===dateDuJour(), bd=document.createElement('div'); bd.className='defi';
+    bd.innerHTML='<span style="font-size:26px">📅</span><div><b>Défi du jour</b> : réussis « '+(dj+1)+'. '+NIVEAUX[dj].titre+' » avec <b>3 étoiles</b>. '+(fait?'✅ Relevé ! Reviens demain.':'Récompense : +100 XP et +30 🔩')+'</div>'+(fait?'':'<button class="btn p">Relever le défi</button>');
+    const b=bd.querySelector('button'); if(b) b.onclick=()=>ouvrirNiveau(dj); C.appendChild(bd); }
+  CEINTURES.forEach((ce,k)=>{
+    const d=document.createElement('div'); d.className='ceinture'; d.style.setProperty('--c',ce.c);
+    d.innerHTML='<h3>'+ce.nom+(ceintureObtenue(k)?' ✅':'')+' <small>'+ce.sous+'</small></h3>';
+    const T=document.createElement('div'); T.className='tuiles';
+    NIVEAUX.forEach((n,i)=>{ if(n.ce!==k) return; const ok=debloque(i), e=joueur.etoiles[n.id]||0, b=document.createElement('button');
+      b.className='tuile'+(ok?'':' lock'); b.innerHTML='<b>'+(i+1)+'. '+n.titre+'</b><span>'+(n.variantes.length>1?'🔀 '+n.variantes.length+' circuits':'1 circuit')+(joueur.tele[n.id]?' · 🎮 ✓':'')+'</span><div class="et">'+'★'.repeat(e)+'<span style="color:#cbd5e1">'+'★'.repeat(3-e)+'</span></div>';
+      b.onclick=()=>{ if(ok) ouvrirNiveau(i); }; T.appendChild(b); });
+    d.appendChild(T); C.appendChild(d);
+  });
+}
+
+/* =========================================================
+   ÉCRAN DE JEU (un joueur)
+   ========================================================= */
+let nbIndices=0;
+const J={idx:0,def:null,var:0,M:null,R:null,mode:'prog',gen:null,timer:null,ctx:null,gestes:[],fini:false};
+const edJeu=new Editeur($('#edJeu'),{onChange:()=>{ if(J.def&&J.def.id) store('mbotProg_'+cleJoueur()+'_'+J.def.id,JSON.stringify(edJeu.prog.map(({id,...b})=>b))); },extra:el=>{
+  const b=document.createElement('div'); b.className='barre';
+  const t=document.createElement('button'); t.className='btn'; t.textContent='🤖 Pour le vrai mBot'; t.onclick=()=>traduire(edJeu.prog); b.appendChild(t);
+  const ind=document.createElement('button'); ind.className='btn o'; ind.textContent='💡 Coup de pouce'; ind.onclick=()=>indice(); b.appendChild(ind);
+  el.appendChild(b); const z=document.createElement('div'); z.className='indices'; z.id='zIndices'; el.appendChild(z); montrerIndices(); }});
+function indice(){ const L=(J.def&&J.def.indices)||[]; if(nbIndices<L.length) nbIndices++; montrerIndices(); }
+function montrerIndices(){ const z=document.getElementById('zIndices'); if(!z) return; const L=(J.def&&J.def.indices)||[]; z.innerHTML=L.slice(0,nbIndices).map(t=>'<div>💡 '+t+'</div>').join('')+(J.def&&nbIndices>=L.length&&L.length?'':''); }
+
+function ouvrirNiveau(i,custom){
+  J.idx=i; J.def=custom||NIVEAUX[i]; J.var=0; nbIndices=0; J.fini=false; J.essais=0; J.echecs=0; J.vues=new Set([0]);
+  const ce=CEINTURES[J.def.ce]||{nom:'Circuit perso',c:'#a5b4fc'};
+  $('#nCeinture').textContent=ce.nom; $('#nCeinture').style.setProperty('--c',ce.c); $('#nCeinture').style.setProperty('--t',ce.t||'#1e293b');
+  $('#nTitre').textContent=(custom?'':((i+1)+'. '))+J.def.titre;
+  $('#nConsigne').textContent=J.def.consigne; $('#nAnalogie').textContent='💭 '+J.def.analogie; $('#nAnalogie').style.display=J.def.analogie?'':'none';
+  $('#bVariante').style.display=J.def.variantes.length>1?'':'none';
+  edJeu.config({blocs:J.def.blocs,conds:J.def.conds||[],par:J.def.par});
+  let p=null; try{ p=JSON.parse(store('mbotProg_'+cleJoueur()+'_'+J.def.id)||'null'); }catch(e){}
+  edJeu.prog=[]; if(p&&p.length) edJeu.charger(p); else edJeu.render();
+  montrer('jeu'); reinit(); choisirMode(J.mode); setMsg('Prêt ! '+(J.mode==='prog'?'Écris ton programme puis clique sur ▶ Lancer.':'Pilote avec les flèches du clavier.'),'info');
+}
+$('#bRetour').onclick=()=>montrer('niveaux');
+$('#bVariante').onclick=()=>{ J.var=(J.var+1)%J.def.variantes.length; J.vues.add(J.var); if(J.vues.size>=J.def.variantes.length) trophee('explorateur'); reinit(); setMsg('Circuit '+(J.var+1)+' sur '+J.def.variantes.length+'.','info'); };
+function reinit(){ arreter(); J.M=construireMonde(J.def,J.var); J.R=nouveauRobot(J.M,J.M.start.x,J.M.start.y,J.M.start.d); J.R.skin=joueur.equip; J.gestes=[]; J.fini=false; edJeu.marquer(-1); majTaches(); }
+function majTaches(){
+  const M=J.M,R=J.R,t=[];
+  if(M.piles.size) t.push('<span class="'+(R.got.size>=M.piles.size?'ok':'')+'">🔋 Piles '+R.got.size+'/'+M.piles.size+'</span>');
+  if(M.colis.size) t.push('<span class="'+(R.bip.size>=M.colis.size?'ok':'')+'">📦 Colis '+R.bip.size+'/'+M.colis.size+'</span>');
+  t.push('<span class="'+(R.gagne?'ok':'')+'">🏁 Sortie</span>');
+  t.push('<span style="color:#64748b;font-weight:500">⏱ '+R.ticks+' actions</span>');
+  $('#nTaches').innerHTML=t.join('');
+}
+function setMsg(t,cls){ const m=$('#msg'); m.textContent=t; m.className='msg '+(cls||''); }
+function duree(){ return [0,650,420,260,140,60][+$('#vitesse').value]; }
+function choisirMode(m){
+  J.mode=m; $('#mTele').classList.toggle('on',m==='tele'); $('#mProg').classList.toggle('on',m==='prog');
+  $('#ctrlProg').style.display=m==='prog'?'inline-flex':'none'; $('#touches').style.display=m==='tele'?'':'none'; if(m==='tele'&&document.activeElement) document.activeElement.blur();
+  reinit(); setMsg(m==='tele'?'Mode télécommande : pilote avec le clavier. Tes gestes sont notés.':'Mode programme : écris toute la recette, puis ▶ Lancer.','info');
+}
+$('#mTele').onclick=()=>choisirMode('tele'); $('#mProg').onclick=()=>choisirMode('prog');
+$('#bReset').onclick=()=>{ reinit(); setMsg('Robot remis au départ.','info'); };
+
+/* --- mode programme --- */
+function preparer(){
+  const c=compiler(edJeu.prog);
+  if(c.err.length){ edJeu.marquer(c.err[0].i,'err'); setMsg('⚠ '+c.err[0].msg,'ko'); return false; }
+  if(!edJeu.prog.length){ setMsg('Ton programme est vide : clique sur des blocs à droite.','ko'); return false; }
+  J.var=J.def.variantes.length>1?Math.floor(Math.random()*J.def.variantes.length):0;
+  reinit(); J.essais++; J.ctx={stop:false,iter:0,vide:0,autres:()=>[]}; J.gen=executer(c.arbre,J.M,J.R,J.ctx);
+  if(J.def.variantes.length>1) setMsg('Circuit '+(J.var+1)+' sur '+J.def.variantes.length+' tiré au hasard…','info'); else setMsg('Le robot exécute ton programme…','info');
+  return true;
+}
+function etape(){
+  if(!J.gen) return false;
+  const s=J.gen.next();
+  if(s.done){ fin(); return false; }
+  const ev=s.value, avant=poseAffichee(J.R);
+  edJeu.marquer(ev.i,ev.type==='echec'?'err':'run');
+  effetAction(J.R,ev); if(ev.type==='action') animer(J.R,{x:prevX(J.R,ev),y:prevY(J.R,ev),ang:prevA(J.R,ev)},duree()*0.9);
+  majTaches();
+  if(ev.type==='echec'){ setMsg('❌ '+ev.msg+' (bloc n°'+(ev.i+1)+')','ko'); J.gen=null; J.echecs++; return false; }
+  if(ev.type==='gagne'){ J.gen=null; victoire(); return false; }
+  return true;
+}
+/* position avant le mouvement, pour l'animation */
+function prevX(R,ev){ if(ev.a==='av') return R.x-DIRS[R.d][0]; if(ev.a==='ar') return R.x+DIRS[R.d][0]; return R.x; }
+function prevY(R,ev){ if(ev.a==='av') return R.y-DIRS[R.d][1]; if(ev.a==='ar') return R.y+DIRS[R.d][1]; return R.y; }
+function prevA(R,ev){ if(ev.a==='g') return R.ang+90; if(ev.a==='d') return R.ang-90; return R.ang; }
+function boucle(){ if(!etape()) { J.timer=null; return; } J.timer=setTimeout(boucle,duree()); }
+$('#bLancer').onclick=()=>{ if(J.mode!=='prog') return; if(preparer()) boucle(); };
+$('#bPas').onclick=()=>{ if(J.mode!=='prog') return; stat('pas'); if(!J.gen){ if(!preparer()) return; setMsg('Pas à pas : clique encore pour avancer d\'une action.','info'); } etape(); };
+$('#bStop').onclick=()=>{ arreter(); setMsg('Programme arrêté.','info'); };
+function arreter(){ if(J.timer) clearTimeout(J.timer); J.timer=null; J.gen=null; if(D.timer){ clearTimeout(D.timer); D.timer=null; } if(D.horloge){ clearInterval(D.horloge); D.horloge=null; } }
+function fin(){ J.gen=null; if(J.R.gagne) return; const M=J.M,R=J.R; let m='Le programme est terminé, mais ';
+  if(R.got.size<M.piles.size) m+='il reste des piles à ramasser.'; else if(R.bip.size<M.colis.size) m+='le colis n\'est pas livré (Bip sur le colis).'; else m+='le robot n\'est pas sur le drapeau.';
+  setMsg('🤔 '+m,'ko'); }
+function victoire(){
+  const def=J.def, nb=nbBlocs(edJeu.prog);
+  let tous=1, n=def.variantes.length;
+  if(n>1){ tous=0; for(let v=0;v<n;v++){ if(simuler(def,v,edJeu.prog.map(({id,...b})=>b)).ok) tous++; } }
+  if(n>1 && tous<n){ setMsg('✅ Réussi sur ce circuit… mais ton programme ne marche que sur '+tous+' circuit(s) sur '+n+'. Il doit marcher partout : utilise les capteurs !','ko'); return; }
+  const et=def.custom?3:etoiles(nb,def.par), avant=joueur.etoiles[def.id]||0;
+  if(!def.custom){ joueur.etoiles[def.id]=Math.max(avant,et); sauver(); }
+  recompenserVictoire(def,nb,et,avant);
+  setMsg('🏆 Mission réussie !'+(n>1?' Ton programme marche sur les '+n+' circuits : c\'est un vrai algorithme.':''),'ok');
+  const suivant=J.idx+1<NIVEAUX.length&&!def.custom;
+  modale('<div class="victoire">🏆 Mission réussie !</div><div class="etoiles">'+'★'.repeat(et)+'<span style="color:#e2e8f0">'+'★'.repeat(3-et)+'</span></div>'
+   +'<p style="text-align:center">Ton programme : <b>'+nb+' blocs</b>'+(def.par?' · objectif ⭐⭐⭐ : '+def.par+' blocs':'')+'</p>'
+   +(et<3&&def.par?'<p style="text-align:center">💡 Peux-tu faire plus court ? '+(def.ce>=2?'Une boucle peut remplacer des blocs qui se répètent.':'Un bloc « Avancer de 3 » remplace trois blocs « Avancer de 1 ».')+'</p>':'')
+   +(ceintureObtenue(def.ce)&&!def.custom?'<p style="text-align:center;font-size:20px">🥋 '+CEINTURES[def.ce].nom+' obtenue !</p>':'')
+   +'<p style="text-align:center"><button class="btn" onclick="fermerModale()">Rester ici</button> '+(suivant?'<button class="btn p" onclick="fermerModale();ouvrirNiveau('+(J.idx+1)+')">Niveau suivant →</button>':'<button class="btn p" onclick="fermerModale();montrer(\'niveaux\')">Niveaux</button>')+'</p>');
+}
+
+/* --- mode télécommande --- */
+const TOUCHES1={ArrowUp:'av',ArrowDown:'ar',ArrowLeft:'g',ArrowRight:'d','1':'led:rouge','2':'led:vert','3':'led:bleu','4':'led:blanc','0':'led:éteint',' ':'bip',Enter:'att'};
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+  if(ecranCourant==='jeu'&&J.mode==='tele'){ const a=TOUCHES1[e.key]; if(!a) return; e.preventDefault(); teleAction(a); }
+  else if(ecranCourant==='duel') duelTouche(e);
+});
+function teleAction(a){
+  if(J.R.anim||J.fini) return;
+  const R=J.R, avant={x:R.x,y:R.y,ang:R.ang}, res=agir(J.M,R,a,[]);
+  R.ticks++;
+  if(!res.ok){ effetAction(R,{type:'echec'}); setMsg('❌ '+res.msg,'ko'); majTaches(); return; }
+  J.gestes.push(a); animer(R,avant,Math.max(120,duree()*0.8)); effetAction(R,{type:'action',a,res}); majTaches();
+  setMsg(J.gestes.length+' geste(s).','info');
+  if(gagne(J.M,R)){ R.gagne=true; J.fini=true; effetAction(R,{type:'gagne'}); majTaches(); if(!J.def.custom){ const neuf=!joueur.tele[J.def.id]; joueur.tele[J.def.id]=true; sauver(); if(neuf) gagner(15,5,'Réussi en télécommande'); verifierTrophees(); }
+    setMsg('🎮 Réussi en pilotage avec '+J.gestes.length+' gestes ! Maintenant, le vrai défi : transforme tes gestes en programme, puis raccourcis-le.','ok'); }
+}
+$('#bGestes').onclick=()=>{
+  if(!J.gestes.length){ setMsg('Pilote d\'abord le robot avec le clavier.','ko'); return; }
+  const prog=[]; const ajouterB=b=>{ const avant=prog[prog.length-1]; if(avant&&avant.t===b.t&&(b.t==='avancer'||b.t==='reculer'||b.t==='attendre')) avant.n++; else prog.push(b); };
+  J.gestes.forEach(a=>{ if(a==='av') ajouterB({t:'avancer',n:1}); else if(a==='ar') ajouterB({t:'reculer',n:1}); else if(a==='g') ajouterB({t:'gauche'}); else if(a==='d') ajouterB({t:'droite'}); else if(a==='bip') ajouterB({t:'bip'}); else if(a==='att') ajouterB({t:'attendre',n:1}); else if(a.startsWith('led:')) ajouterB({t:'led',c:a.slice(4)}); });
+  const interdits=prog.filter(b=>!(J.def.blocs||B4).includes(b.t)), nG=J.gestes.length;
+  edJeu.charger(prog.filter(b=>(J.def.blocs||B4).includes(b.t))); choisirMode('prog');
+  setMsg('Tes '+nG+' gestes sont devenus '+nbBlocs(prog)+' blocs.'+(interdits.length?' (Certains blocs ne sont pas encore disponibles à ce niveau.)':'')+' Lance-le pour vérifier !','info');
+};
+
+function modale(html){ $('#mBoite').innerHTML=html; $('#modale').classList.add('on'); }
+function fermerModale(){ $('#modale').classList.remove('on'); }
+function info(t){ modale('<p style="font-size:17px">'+t+'</p><p style="text-align:right"><button class="btn p" onclick="fermerModale()">OK</button></p>'); }
+function confirmer(t,ok){ modale('<p style="font-size:17px">'+t+'</p><p style="text-align:right"><button class="btn" onclick="fermerModale()">Annuler</button> <button class="btn r" id="mOui">Oui</button></p>'); $('#mOui').onclick=()=>{ fermerModale(); ok(); }; }
+function demander(t,ok){ modale('<p style="font-size:17px">'+t+'</p><input id="mVal" type="password" style="font:inherit;font-size:18px;padding:6px 10px;border:2px solid #cbd5e1;border-radius:8px;width:100%"><p style="text-align:right"><button class="btn" onclick="fermerModale()">Annuler</button> <button class="btn p" id="mOk">Valider</button></p>'); const v=$('#mVal'); v.focus(); const go=()=>{ const x=v.value; fermerModale(); ok(x); }; $('#mOk').onclick=go; v.onkeydown=e=>{ if(e.key==='Enter') go(); }; }
+$('#modale').onclick=e=>{ if(e.target.id==='modale') fermerModale(); };
+
+/* =========================================================
+   DUEL
+   ========================================================= */
+const D={carte:0,mode:'tele',M:null,A:null,B:null,timer:null,horloge:null,ticks:0,en:false,t0:0,ed1:null,ed2:null,gens:null,ctxs:null,fini:false,coups:[0,0]};
+function duelInit(){
+  const s=$('#dCarte'); if(!s.options.length) DUELS.forEach((d,k)=>{ const o=document.createElement('option'); o.value=k; o.textContent=d.nom; s.appendChild(o); });
+  s.onchange=()=>{ D.carte=+s.value; duelReset(); };
+  $('#dTele').onclick=()=>{ D.mode='tele'; duelReset(); }; $('#dProg').onclick=()=>{ D.mode='prog'; duelReset(); };
+  $('#dGo').onclick=duelGo; $('#dReset').onclick=duelReset;
+  duelReset();
+}
+function duelMonde(){
+  const d=DUELS[D.carte]; const map=d.map.map(l=>l.replace('A','.').replace('B','.'));
+  const M=construireMonde({map,dir:1},0); M.feu=Math.floor(Math.random()*6);
+  D.M=M; D.A=nouveauRobot(M,d.a[0],d.a[1],d.a[2],'A','#2563eb'); D.B=nouveauRobot(M,d.b[0],d.b[1],d.b[2],'B','#db2777'); D.ticks=0;
+}
+function duelReset(){
+  arreter(); D.fini=false; D.en=false; D.course=false; D.coups=[0,0]; duelMonde();
+  $('#dTele').classList.toggle('on',D.mode==='tele'); $('#dProg').classList.toggle('on',D.mode==='prog');
+  const d=DUELS[D.carte], conds=d.conds||['obstacle'];
+  if(D.mode==='tele'){
+    $('#dRegle').textContent='Le premier au drapeau gagne. Attention aux barrières et aux feux !';
+    $('#dJ1').innerHTML='<h3 style="color:#2563eb">Joueur A 🔵</h3><div class="score" id="sA">0</div><p style="text-align:center">coups</p><p class="touches"><kbd>Z</kbd> avancer · <kbd>S</kbd> reculer<br><kbd>Q</kbd> <kbd>D</kbd> tourner<br><kbd>A</kbd> LED rouge · <kbd>E</kbd> verte · <kbd>R</kbd> bleue</p>';
+    $('#dJ2').innerHTML='<h3 style="color:#db2777">Joueur B 🔴</h3><div class="score" id="sB">0</div><p style="text-align:center">coups</p><p class="touches"><kbd>↑</kbd> avancer · <kbd>↓</kbd> reculer<br><kbd>←</kbd> <kbd>→</kbd> tourner<br><kbd>K</kbd> LED rouge · <kbd>L</kbd> verte · <kbd>M</kbd> bleue</p>';
+    dMsg('Cliquez sur ▶ Départ. Compte à rebours, puis partez !','info');
+  } else {
+    $('#dRegle').textContent='Chacun écrit son programme avec '+d.budget+' blocs maximum. Les deux robots démarrent ensemble.';
+    $('#dJ1').innerHTML=''; $('#dJ2').innerHTML='';
+    const opt=k=>({titre:k==='A'?'🔵 Programme A':'🔴 Programme B',blocs:B4,conds,budget:d.budget});
+    D.ed1=new Editeur($('#dJ1'),opt('A')); D.ed2=new Editeur($('#dJ2'),opt('B'));
+    dMsg('Écrivez vos programmes (cachez l\'écran de l\'autre !), puis ▶ Départ.','info');
+  }
+}
+function dMsg(t,c){ const m=$('#dMsg'); m.textContent=t; m.className='msg '+(c||''); }
+function duelGo(){
+  if(D.en) return; duelMonde(); D.fini=false;
+  if(D.mode==='tele'){
+    let n=3; dMsg('3…','info'); D.en=true;
+    const cd=setInterval(()=>{ n--; if(n>0){ dMsg(n+'…','info'); son(440,.1); } else { clearInterval(cd); dMsg('Partez !','ok'); son(880,.2); D.t0=performance.now(); D.horloge=setInterval(()=>{ D.ticks++; D.A.ticks=D.B.ticks=D.ticks; },700); D.course=true; } },700);
+  } else {
+    const c1=compiler(D.ed1.prog), c2=compiler(D.ed2.prog);
+    if(c1.err.length||c2.err.length){ dMsg('⚠ '+(c1.err.length?'A : '+c1.err[0].msg:'B : '+c2.err[0].msg),'ko'); return; }
+    if(nbBlocs(D.ed1.prog)>DUELS[D.carte].budget||nbBlocs(D.ed2.prog)>DUELS[D.carte].budget){ dMsg('Un programme dépasse le budget de blocs.','ko'); return; }
+    D.en=true; const R=[D.A,D.B];
+    D.ctxs=[0,1].map(k=>({stop:false,iter:0,vide:0,autres:()=>[R[1-k]]}));
+    D.gens=[executer(c1.arbre,D.M,D.A,D.ctxs[0]),executer(c2.arbre,D.M,D.B,D.ctxs[1])];
+    D.finis=[false,false]; D.tour=0; dMsg('C\'est parti !','info'); duelPas();
+  }
+}
+function duelPas(){
+  const R=[D.A,D.B], eds=[D.ed1,D.ed2], ordre=D.tour++%2?[1,0]:[0,1];
+  for(const k of ordre){ if(D.finis[k]) continue; const g=D.gens[k], s=g.next();
+    if(s.done){ D.finis[k]=true; continue; }
+    const ev=s.value; eds[k].marquer(ev.i,ev.type==='echec'?'err':'run'); effetAction(R[k],ev);
+    if(ev.type==='action') animer(R[k],{x:prevX(R[k],ev),y:prevY(R[k],ev),ang:prevA(R[k],ev)},260);
+    if(ev.type==='echec'){ D.finis[k]=true; dMsg((k?'B':'A')+' : '+ev.msg,'ko'); }
+  }
+  const gA=D.A.gagne,gB=D.B.gagne;
+  if(gA||gB){ D.en=false; let m;
+    if(gA&&gB){ const a=nbBlocs(D.ed1.prog),b=nbBlocs(D.ed2.prog); m=a===b?'Égalité parfaite !':(a<b?'Arrivée ensemble, A gagne avec un programme plus court ('+a+' blocs) !':'Arrivée ensemble, B gagne avec un programme plus court ('+b+' blocs) !'); }
+    else m=(gA?'🔵 A':'🔴 B')+' gagne en '+(gA?D.A:D.B).ticks+' actions !';
+    dMsg('🏆 '+m,'ok'); effetAction(gA?D.A:D.B,{type:'gagne'}); trophee('duelliste'); gagner(25,10,'Duel terminé'); return; }
+  if(D.finis[0]&&D.finis[1]){ D.en=false; dMsg('Aucun robot n\'est arrivé. Corrigez vos programmes et recommencez.','ko'); return; }
+  D.timer=setTimeout(duelPas,320);
+}
+const TOUCHES_A={z:'av',s:'ar',q:'g',d:'d',a:'led:rouge',e:'led:vert',r:'led:bleu'};
+const TOUCHES_B={ArrowUp:'av',ArrowDown:'ar',ArrowLeft:'g',ArrowRight:'d',k:'led:rouge',l:'led:vert',m:'led:bleu'};
+function duelTouche(e){
+  if(D.mode!=='tele') return;
+  const k=e.key.length===1?e.key.toLowerCase():e.key; let R=null,a=null,j=0;
+  if(TOUCHES_A[k]){ R=D.A; a=TOUCHES_A[k]; j=0; } else if(TOUCHES_B[k]){ R=D.B; a=TOUCHES_B[k]; j=1; }
+  if(!R) return; e.preventDefault();
+  if(!D.course||D.fini||R.anim) return;
+  const avant={x:R.x,y:R.y,ang:R.ang}, res=agir(D.M,R,a,[j?D.A:D.B]);
+  D.coups[j]++; const s=document.getElementById(j?'sB':'sA'); if(s) s.textContent=D.coups[j];
+  if(!res.ok){ effetAction(R,{type:res.bloque?'bloque':'echec'}); if(!res.bloque) dMsg((j?'B':'A')+' : '+res.msg,'ko'); return; }
+  animer(R,avant,130); effetAction(R,{type:'action',a,res});
+  if(cel(D.M,R.x,R.y)==='F'){ R.gagne=true; D.fini=true; D.course=false; D.en=false; clearInterval(D.horloge); D.horloge=null; const t=((performance.now()-D.t0)/1000).toFixed(1);
+    dMsg('🏆 '+(j?'🔴 B':'🔵 A')+' gagne en '+t+' s et '+D.coups[j]+' coups !','ok'); effetAction(R,{type:'gagne'}); trophee('duelliste'); gagner(25,10,'Duel terminé'); }
+}
+
+/* =========================================================
+   ATELIER DE CIRCUITS
+   ========================================================= */
+const PINCEAUX=[['.','Sol'],['#','Mur'],['S','Départ'],['F','Drapeau'],['r','Barrière rouge'],['g','Barrière verte'],['b','Barrière bleue'],['d','Tunnel'],['n','Passage étroit'],['p','Pile'],['c','Colis'],['l','Ligne noire'],['t','Feu'],['o','Caisse']];
+const AT={g:null,dir:1,p:'#',init:false,down:false};
+function atelierVide(){ const g=[]; for(let y=0;y<8;y++){ g.push([]); for(let x=0;x<11;x++) g[y].push((x===0||y===0||x===10||y===7)?'#':'.'); } g[1][1]='S'; g[6][9]='F'; return g; }
+function atelierInit(){
+  if(!AT.init){ AT.init=true; let s=null; try{ s=JSON.parse(store('mbotAtelier')||'null'); }catch(e){} AT.g=s&&s.g?s.g:atelierVide(); AT.dir=s?s.dir:1; if(s){ $('#aLigne').checked=!!s.l; $('#aVert').checked=!!s.v; }
+    const P=$('#pinceaux'); PINCEAUX.forEach(([c,n])=>{ const b=document.createElement('button'); b.textContent=n; b.dataset.c=c; b.onclick=()=>{ AT.p=c; P.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); }; if(c==='#') b.classList.add('on'); P.appendChild(b); });
+    const cv=$('#cvA'); const peindre=e=>{ const r=cv.getBoundingClientRect(), cs=cv._cs, x=Math.floor((e.clientX-r.left)/cs), y=Math.floor((e.clientY-r.top)/cs); if(x<0||y<0||x>=11||y>=8) return;
+      const cur=AT.g[y][x];
+      if(AT.p==='S'){ if(cur==='S'&&e.type==='mousedown'){ AT.dir=(AT.dir+1)%4; } else { AT.g.forEach(l=>l.forEach((c,i)=>{ if(c==='S') l[i]='.'; })); AT.g[y][x]='S'; } }
+      else if(cur==='S'&&e.type==='mousedown'){ AT.dir=(AT.dir+1)%4; }
+      else if(cur!=='S') AT.g[y][x]=AT.p;
+      atelierSauver(); };
+    cv.onmousedown=e=>{ AT.down=true; peindre(e); }; cv.onmousemove=e=>{ if(AT.down&&AT.p!=='S') peindre(e); }; window.addEventListener('mouseup',()=>AT.down=false);
+    $('#aVider').onclick=()=>confirmer('Vider le circuit ?',()=>{ AT.g=atelierVide(); AT.dir=1; atelierSauver(); });
+    $('#aLigne').onchange=atelierSauver; $('#aVert').onchange=atelierSauver;
+    $('#aJouer').onclick=()=>{ const def=atelierNiveau(); if(!def) return; J.mode='prog'; ouvrirNiveau(0,def); };
+    $('#aCopier').onclick=()=>{ const code='MBOT1:'+btoa(unescape(encodeURIComponent(JSON.stringify({g:AT.g.map(l=>l.join('')),d:AT.dir,l:$('#aLigne').checked,v:$('#aVert').checked})))); $('#aCode').value=code; try{ navigator.clipboard.writeText(code); }catch(e){} $('#aCode').select(); trophee('partageur'); };
+    $('#aCharger').onclick=()=>{ try{ const t=$('#aCode').value.trim(); if(!t.startsWith('MBOT1:')) throw 0; const o=JSON.parse(decodeURIComponent(escape(atob(t.slice(6))))); AT.g=o.g.map(l=>l.split('')); AT.dir=o.d; $('#aLigne').checked=!!o.l; $('#aVert').checked=!!o.v; atelierSauver(); }catch(e){ info('Ce code n\'est pas valide.'); } };
+  }
+}
+function atelierSauver(){ store('mbotAtelier',JSON.stringify({g:AT.g,dir:AT.dir,l:$('#aLigne').checked,v:$('#aVert').checked})); }
+function atelierNiveau(){
+  const map=AT.g.map(l=>l.join('')); const s=map.join('');
+  if(!s.includes('S')||!s.includes('F')){ info('Il faut un départ et un drapeau.'); return null; }
+  return {id:'perso',custom:true,ce:-1,titre:'Mon circuit',variantes:[{map,feu:0}],dir:AT.dir,blocs:B4,conds:Object.keys(CONDS),par:0,ligne:map.join('').includes('l'),surLigne:$('#aLigne').checked,vertDehors:$('#aVert').checked,ledDepart:$('#aVert').checked?'vert':'éteint',
+    consigne:'Ton circuit ! Teste-le en télécommande, puis programme-le.',analogie:'Un bon circuit de défi se résout avec un programme court… mais pas trop facile.',indices:[]};
+}
+
+/* =========================================================
+   BILAN
+   ========================================================= */
+$('#bBilan').onclick=()=>{
+  if(!joueur.prenom){ info('Entre d\'abord ton prénom.'); return; }
+  const d=new Date(), date=d.toISOString().slice(0,10), propre=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9_-]+/g,'-');
+  let tot=0; const lignes=NIVEAUX.map((n,i)=>{ const e=joueur.etoiles[n.id]||0; tot+=e; return '<tr><td>'+(i+1)+'</td><td>'+n.titre+'</td><td>'+CEINTURES[n.ce].nom+'</td><td>'+('★'.repeat(e)||'—')+'</td><td>'+(joueur.tele[n.id]?'oui':'')+'</td></tr>'; }).join('');
+  const ce=CEINTURES.filter((c,k)=>ceintureObtenue(k)).map(c=>c.nom).join(', ')||'aucune pour l\'instant';
+  const html='<!DOCTYPE html><meta charset="utf-8"><title>Bilan mBot Mission</title><body style="font-family:Segoe UI,Verdana,sans-serif"><h1>Bilan mBot Mission</h1><p><b>'+joueur.prenom+'</b> · '+joueur.classe+' · '+d.toLocaleDateString('fr-FR')+'</p><p>Ceintures : <b>'+ce+'</b> · Étoiles : <b>'+tot+' / '+(NIVEAUX.length*3)+'</b></p><table border="1" cellpadding="5" style="border-collapse:collapse"><tr><th>N°</th><th>Niveau</th><th>Ceinture</th><th>Étoiles</th><th>Réussi en télécommande</th></tr>'+lignes+'</table></body>';
+  const nomF=propre(joueur.classe||'CLASSE')+'_'+propre(joueur.prenom)+'_mBot_Mission_'+date+'.html';
+  const texte=joueur.prenom+' · '+joueur.classe+' · '+d.toLocaleDateString('fr-FR')+'\nCeintures : '+ce+'\nÉtoiles : '+tot+' / '+(NIVEAUX.length*3)+'\n'+NIVEAUX.map((n,i)=>(i+1)+'. '+n.titre+' : '+((joueur.etoiles[n.id]||0)+' étoile(s)')).join('\n');
+  modale('<h2 style="margin-top:0">💾 Mon bilan</h2><p>Ceintures : <b>'+ce+'</b><br>Étoiles : <b>'+tot+' / '+(NIVEAUX.length*3)+'</b></p><p><button class="btn p" id="bTel">Télécharger le fichier</button> <button class="btn" id="bCop">Copier le texte</button> <button class="btn" onclick="fermerModale()">Fermer</button></p><p class="aide" id="bAide">Le fichier s\'appelle '+nomF+'.</p>');
+  $('#bTel').onclick=()=>{ try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([html],{type:'text/html'})); a.download=nomF; document.body.appendChild(a); a.click(); a.remove(); }catch(e){ $('#bAide').textContent='Téléchargement impossible ici : utilise « Copier le texte ».'; } };
+  $('#bCop').onclick=()=>{ try{ navigator.clipboard.writeText(texte).then(()=>{ $('#bAide').textContent='Texte copié !'; },()=>{ $('#bAide').textContent='Copie refusée par le navigateur.'; }); }catch(e){ $('#bAide').textContent='Copie impossible ici.'; } };
+};
+
+/* =========================================================
+   POUR LE VRAI mBot : blocs mBlock 5 + code Arduino (bibliothèque Makeblock MeMCore)
+   Sources vérifiées : bibliothèque Makeblock (MeMCore.h, MeLineFollower),
+   notices académiques (Bordeaux, Rennes, Limoges) — voir README.
+   ========================================================= */
+let REG={sCase:0.7,sQuart:0.6,puiss:50,seuil:300,dist:10,court:null};
+try{ Object.assign(REG,JSON.parse(store('mbotReglages')||'{}')); }catch(e){}
+const LED_RVB={rouge:[255,0,0],vert:[0,255,0],bleu:[0,0,255],blanc:[255,255,255],'éteint':[0,0,0]};
+function traductions(prog,o){
+  const P=Math.round(o.puiss*255/100), f=v=>String(Math.round(v*100)/100).replace('.',',');
+  const condB={obstacle:'(distance du capteur à ultrasons (port 3)) < '+o.dist,murD:'⚠ mur à droite : pas de capteur sur le côté',murG:'⚠ mur à gauche : pas de capteur sur le côté',
+    ligne:'(valeur du suiveur de ligne (port 2)) = 0',ligneG:'(valeur du suiveur de ligne (port 2)) = 1',ligneD:'(valeur du suiveur de ligne (port 2)) = 2',
+    sombre:'(intensité lumineuse du capteur de lumière (embarqué)) < '+o.seuil,feu:'⚠ feu rouge : pas de capteur'};
+  const condC={obstacle:'ultrason.distanceCm() < DISTANCE_OBSTACLE',murD:'false /* pas de capteur à droite sur le mBot */',murG:'false /* pas de capteur à gauche sur le mBot */',
+    ligne:'suiveur.readSensors() == 0',ligneG:'suiveur.readSensors() == 1',ligneD:'suiveur.readSensors() == 2',sombre:'lumiere.read() < SEUIL_LUMIERE',feu:'false /* pas de feu sur le vrai circuit */'};
+  const B=['lorsque le bouton embarqué est appuyé'], C=[], alertes=new Set(['reglage']); let prof=0, capt=0, k=0; const pile=[];
+  const LB=t=>B.push('   '.repeat(prof+1)+t), LC=t=>C.push('  '.repeat(prof+1)+t);
+  prog.forEach(b=>{
+    if(b.t==='fin'){ const t=pile.pop(); prof=Math.max(0,prof-1); if(t==='jusqua') capt--; LC('}'); return; }
+    if(b.t==='sinon'){ prof=Math.max(0,prof-1); LB('sinon'); LC('} else {'); prof++; return; }
+    const crt=o.court&&capt>0, n=b.n||1;
+    switch(b.t){
+      case 'avancer': if(crt){ LB('avancer à '+o.puiss+' % de puissance'); LC('roues(P, P); delay(20);'); } else { LB('avancer à '+o.puiss+' % de puissance pendant '+f(n*o.sCase)+' secondes'); LC('avancer('+Math.round(n*o.sCase*1000)+');'); } break;
+      case 'reculer': if(crt){ LB('reculer à '+o.puiss+' % de puissance'); LC('roues(-P, -P); delay(20);'); } else { LB('reculer à '+o.puiss+' % de puissance pendant '+f(n*o.sCase)+' secondes'); LC('reculer('+Math.round(n*o.sCase*1000)+');'); } break;
+      case 'gauche': if(crt){ LB('tourner à gauche à '+o.puiss+' % de puissance'); LC('roues(-P, P); delay(20);'); } else { LB('tourner à gauche à '+o.puiss+' % de puissance pendant '+f(o.sQuart)+' secondes'); LC('tournerGauche();'); } break;
+      case 'droite': if(crt){ LB('tourner à droite à '+o.puiss+' % de puissance'); LC('roues(P, -P); delay(20);'); } else { LB('tourner à droite à '+o.puiss+' % de puissance pendant '+f(o.sQuart)+' secondes'); LC('tournerDroite();'); } break;
+      case 'led': { const c=LED_RVB[b.c]||[0,0,0]; LB(b.c==='éteint'?'éteindre les LED (toutes)':'allumer les LED (toutes) en '+b.c); LC('couleur('+c.join(', ')+');'); break; }
+      case 'bip': LB('jouer la note C5 pendant 0,25 temps'); LC('bip();'); break;
+      case 'attendre': LB('attendre '+n+' secondes'); LC('arret(); delay('+n*1000+');'); break;
+      case 'repeter': k++; LB('répéter '+n+' fois'); LC('for (int i'+k+' = 0; i'+k+' < '+n+'; i'+k+'++) {'); pile.push('repeter'); prof++; break;
+      case 'jusqua': LB('répéter indéfiniment'); LC('while (true) {   // le vrai mBot ne sait pas où est la sortie'); pile.push('jusqua'); capt++; prof++; alertes.add('jusqua'); break;
+      case 'si': LB('si < '+condB[b.cond]+' > alors'); LC('if ('+condC[b.cond]+') {'); pile.push('si'); prof++;
+        if(b.cond==='murD'||b.cond==='murG') alertes.add('mur'); if(b.cond==='feu') alertes.add('feu'); if(b.cond.startsWith('ligne')) alertes.add('ligne'); if(b.cond==='sombre') alertes.add('sombre'); if(b.cond==='obstacle') alertes.add('obstacle'); break;
+    }
+  });
+  if(o.court&&prog.some(b=>b.t==='jusqua')) alertes.add('court');
+  const ino=`// Programme généré par mBot Mission — à téléverser avec l'IDE Arduino
+// Bibliothèque nécessaire : Makeblock-Libraries (github.com/Makeblock-official/Makeblock-Libraries)
+// à installer dans l'IDE Arduino : Croquis > Inclure une bibliothèque > Ajouter la bibliothèque .ZIP
+// Carte : Arduino Uno · le mBot démarre quand on appuie sur le bouton de la carte.
+#include <MeMCore.h>
+
+MeDCMotor moteurGauche(M1);          // moteur gauche (sens avant = valeur négative)
+MeDCMotor moteurDroit(M2);           // moteur droit
+MeRGBLed led(0, 30);                 // les 2 LED de la carte (broche 13)
+MeBuzzer buzzer;                     // buzzer de la carte
+MeUltrasonicSensor ultrason(PORT_3); // capteur à ultrasons sur le port 3
+MeLineFollower suiveur(PORT_2);      // suiveur de ligne sur le port 2
+MeLightSensor lumiere(PORT_6);       // capteur de lumière de la carte
+
+const int P = ${P};                   // puissance : ${o.puiss} % de 255
+const int MS_QUART_TOUR = ${Math.round(o.sQuart*1000)};      // à régler avec le tableau de réglage
+const int DISTANCE_OBSTACLE = ${o.dist};    // en cm
+const int SEUIL_LUMIERE = ${o.seuil};      // à mesurer en mode En direct dans mBlock
+
+void roues(int g, int d) { moteurGauche.run(-g); moteurDroit.run(d); }
+void arret() { roues(0, 0); }
+void avancer(int ms) { roues(P, P); delay(ms); arret(); }
+void reculer(int ms) { roues(-P, -P); delay(ms); arret(); }
+void tournerGauche() { roues(-P, P); delay(MS_QUART_TOUR); arret(); }
+void tournerDroite() { roues(P, -P); delay(MS_QUART_TOUR); arret(); }
+void couleur(int r, int v, int b) { led.setColor(0, r, v, b); led.show(); }
+void bip() { buzzer.tone(523, 250); }
+
+void programme() {
+${C.join('\n')}
+}
+
+void setup() {
+  led.setpin(13);
+  arret();
+  couleur(0, 0, 0);
+  while (analogRead(A7) > 100) { }   // attendre l'appui sur le bouton de la carte
+  delay(300);
+  programme();
+  arret();
+}
+
+void loop() { }
+`;
+  return {blocs:B.join('\n'),ino,alertes:[...alertes]};
+}
+const ALERTES={
+  reglage:'Les durées (1 case = '+'… s, 1 quart de tour = … s) dépendent du sol et des piles : règle-les avec ton tableau de réglage (séance 5).',
+  jusqua:'« Répéter jusqu\'à la sortie » devient « répéter indéfiniment » : le vrai mBot ne sait pas où est le drapeau. Arrête-le avec l\'interrupteur.',
+  ligne:'Suiveur de ligne : 0 = les deux capteurs sur le noir, 3 = les deux sur le blanc. Dans les fiches de plusieurs académies, 1 = seul le capteur gauche voit le noir (tourner à gauche) et 2 = seul le droit. Vérifie sur TON robot : en mode En direct, pose seulement le capteur gauche sur le noir et lis la valeur.',
+  mur:'Le mBot n\'a pas de capteur sur les côtés : « mur à droite / à gauche » n\'existe pas sur le vrai robot. Idée d\'ingénieur : tourner pour regarder avec les ultrasons, puis revenir.',
+  feu:'Il n\'y a pas de feu sur le vrai circuit : remplace-le par une touche de la télécommande ou un obstacle.',
+  sombre:'Le capteur de lumière est sur le dessus de la carte : il mesure la lumière de la pièce, pas le sol devant. Mesure le SEUIL en mode En direct (main posée / main enlevée).',
+  obstacle:'Le capteur à ultrasons mesure de 3 cm à 4 m environ. Vérifie qu\'il est bien branché sur le port 3.',
+  court:'Mouvements courts activés : dans la boucle infinie, le robot avance sans durée et revérifie ses capteurs plusieurs fois par seconde, comme un vrai suiveur de ligne.'
+};
+function traduire(prog){
+  stat('traduits'); trophee('traducteur');
+  const c=compiler(prog); if(c.err.length){ info('⚠ '+c.err[0].msg+'<br>Corrige ton programme avant de le traduire.'); return; }
+  if(REG.court===null) REG.court=prog.some(b=>b.t==='jusqua');
+  const T=traductions(prog,REG), esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  modale('<h2 style="margin-top:0">🤖 Pour le vrai mBot</h2>'
+   +'<div class="reglages"><label>1 case = <input id="rC" type="number" step="0.05" value="'+REG.sCase+'"> s</label><label>¼ de tour = <input id="rQ" type="number" step="0.05" value="'+REG.sQuart+'"> s</label><label>Puissance <input id="rP" type="number" step="5" min="20" max="100" value="'+REG.puiss+'"> %</label><label>Obstacle &lt; <input id="rD" type="number" value="'+REG.dist+'"> cm</label><label>Seuil lumière <input id="rS" type="number" value="'+REG.seuil+'"></label><label><input id="rCo" type="checkbox" '+(REG.court?'checked':'')+'> mouvements courts dans la boucle infinie</label><button class="btn p" id="rOk">Recalculer</button></div>'
+   +'<div class="bascule" style="margin:10px 0"><button id="tB" class="on">🧩 Blocs mBlock 5</button><button id="tA">⌨ Code Arduino</button><button id="tP">🌉 Faire le pont</button></div>'
+   +'<div id="zB"><pre id="pB">'+esc(T.blocs)+'</pre><button class="btn" id="cB">📋 Copier</button></div>'
+   +'<div id="zA" style="display:none"><pre id="pA">'+esc(T.ino)+'</pre><button class="btn" id="cA">📋 Copier le code</button></div>'
+   +'<div id="zP" style="display:none"><ol style="line-height:1.5">'
+     +'<li><b>mBlock 5</b> → Appareils → Ajouter → <b>mBot</b>. Connecter en USB, mode <b>Téléverser</b>.</li>'
+     +'<li>Reproduis les blocs de l\'onglet 🧩 <b>dans le même ordre</b> et avec les mêmes décalages (ce qui est décalé va <b>dans</b> la boucle ou le si).</li>'
+     +'<li>Les couleurs t\'aident : bleu = Action, violet = Montrer (LED, son), orange = Contrôle, bleu clair = Détection, jaune = Événements.</li>'
+     +'<li>Avant de téléverser, compare : mBlock 5 peut afficher le code Arduino de tes blocs (bouton de code, selon la version). Retrouves-tu les mêmes idées que dans l\'onglet ⌨ ?</li>'
+     +'<li>Téléverse, débranche le câble, pose le robot sur le circuit, appuie sur le bouton de la carte.</li>'
+     +'<li>Le robot ne fait pas pareil que dans le jeu ? Normal : le sol, les piles, les virages. Ajuste les durées ici, puis dans mBlock. C\'est le métier d\'ingénieur !</li>'
+     +'<li><b>Pour aller plus loin (experts)</b> : copie le code ⌨ dans l\'IDE Arduino (bibliothèque Makeblock installée, carte « Arduino Uno »), puis téléverse-le.</li></ol></div>'
+   +'<h3 style="margin:10px 0 4px">À savoir avant de tester</h3><ul class="aide" style="font-size:14px">'+T.alertes.map(a=>'<li>'+ALERTES[a].replace('1 case = … s, 1 quart de tour = … s','1 case = '+REG.sCase+' s, ¼ de tour = '+REG.sQuart+' s')+'</li>').join('')+'</ul>'
+   +'<p style="text-align:right"><button class="btn" onclick="fermerModale()">Fermer</button></p>');
+  const onglet=x=>{ ['B','A','P'].forEach(y=>{ $('#z'+y).style.display=y===x?'':'none'; $('#t'+y).classList.toggle('on',y===x); }); };
+  $('#tB').onclick=()=>onglet('B'); $('#tA').onclick=()=>onglet('A'); $('#tP').onclick=()=>onglet('P');
+  const copier=(id,btn)=>{ try{ navigator.clipboard.writeText($(id).textContent).then(()=>{ btn.textContent='✅ Copié'; },()=>{ btn.textContent='Copie refusée : sélectionne le texte'; }); }catch(e){ btn.textContent='Sélectionne le texte et fais Ctrl+C'; } };
+  $('#cB').onclick=e=>copier('#pB',e.target); $('#cA').onclick=e=>copier('#pA',e.target);
+  $('#rOk').onclick=()=>{ REG={sCase:parseFloat($('#rC').value)||0.7,sQuart:parseFloat($('#rQ').value)||0.6,puiss:Math.max(20,Math.min(100,parseInt($('#rP').value)||50)),dist:parseInt($('#rD').value)||10,seuil:parseInt($('#rS').value)||300,court:$('#rCo').checked}; store('mbotReglages',JSON.stringify(REG)); traduire(prog); };
+}
+
+/* =========================================================
+   GAMIFICATION : XP, niveaux, boulons, garage, trophées, défi du jour
+   ========================================================= */
+const TITRES=[[1,'Apprenti'],[3,'Mécano'],[5,'Codeur'],[7,'Ingénieur'],[9,'Expert'],[12,'Légende']];
+function niveauDe(xp){ return 1+Math.floor((Math.sqrt(1+8*xp/100)-1)/2); }
+function xpPour(n){ return 100*n*(n-1)/2; }
+function titreDe(n){ let t='Apprenti'; TITRES.forEach(([k,v])=>{ if(n>=k) t=v; }); return t; }
+const BOUTIQUE=[
+ {id:'bleu',type:'couleur',nom:'Bleu mBot',prix:0,val:'#2563eb'},{id:'rouge',type:'couleur',nom:'Rouge piment',prix:30,val:'#dc2626'},
+ {id:'vert',type:'couleur',nom:'Vert forêt',prix:30,val:'#15803d'},{id:'violet',type:'couleur',nom:'Violet',prix:50,val:'#7c3aed'},
+ {id:'noir',type:'couleur',nom:'Noir mat',prix:80,val:'#111827'},{id:'neon',type:'couleur',nom:'Néon',prix:100,val:'#06b6d4'},
+ {id:'or',type:'couleur',nom:'Or',prix:150,val:'#d4a017'},{id:'guyane',type:'couleur',nom:'Guyane',prix:200,val:'guyane'},
+ {id:'aucun',type:'chapeau',nom:'Rien',prix:0},{id:'antenne',type:'chapeau',nom:'Antenne',prix:40},{id:'casquette',type:'chapeau',nom:'Casquette',prix:60},
+ {id:'helice',type:'chapeau',nom:'Hélice',prix:120},{id:'couronne',type:'chapeau',nom:'Couronne',prix:200},{id:'fusee',type:'chapeau',nom:'Fusée',prix:250},
+ {id:'aucune',type:'trainee',nom:'Aucune',prix:0},{id:'etincelles',type:'trainee',nom:'Étincelles',prix:60},{id:'flammes',type:'trainee',nom:'Flammes',prix:120},{id:'arcenciel',type:'trainee',nom:'Arc-en-ciel',prix:150}
+];
+const TYPES_G={couleur:'🎨 Peinture',chapeau:'🎩 Accessoire',trainee:'✨ Traînée'};
+const TROPHEES=[
+ {id:'premier',ico:'🏁',nom:'Premier pas',desc:'Réussir ton premier niveau.'},
+ {id:'ce0',ico:'🥋',nom:'Ceinture blanche',desc:'Réussir tous les niveaux blancs.'},{id:'ce1',ico:'🥋',nom:'Ceinture jaune',desc:'Réussir tous les niveaux jaunes.'},
+ {id:'ce2',ico:'🥋',nom:'Ceinture orange',desc:'Réussir tous les niveaux orange.'},{id:'ce3',ico:'🥋',nom:'Ceinture verte',desc:'Réussir tous les niveaux verts.'},
+ {id:'ce4',ico:'🥋',nom:'Ceinture bleue',desc:'Réussir tous les niveaux bleus.'},{id:'ce5',ico:'🥋',nom:'Ceinture noire',desc:'Réussir tous les niveaux noirs.'},
+ {id:'parfait',ico:'⭐',nom:'Perfectionniste',desc:'3 étoiles sur 5 niveaux.'},{id:'parfait10',ico:'🌟',nom:'Maître du code',desc:'3 étoiles sur 10 niveaux.'},
+ {id:'legende',ico:'👑',nom:'Légende',desc:'Toutes les étoiles du jeu.'},
+ {id:'premiercoup',ico:'🎯',nom:'Du premier coup',desc:'Réussir un niveau dès le premier lancement.'},
+ {id:'econome',ico:'✂️',nom:'Plus fort que le prof',desc:'Écrire un programme plus court que la solution du prof.'},
+ {id:'perseverant',ico:'💪',nom:'Persévérant',desc:'Réussir après au moins 5 essais ratés.'},
+ {id:'debogueur',ico:'🔍',nom:'Débogueur',desc:'Utiliser le pas à pas 10 fois.'},
+ {id:'pilote',ico:'🎮',nom:'Pilote',desc:'Réussir 5 niveaux en télécommande.'},
+ {id:'duelliste',ico:'⚔️',nom:'Duelliste',desc:'Gagner un duel.'},
+ {id:'architecte',ico:'🛠️',nom:'Architecte',desc:'Jouer un circuit que tu as dessiné.'},
+ {id:'partageur',ico:'📋',nom:'Partageur',desc:'Copier le code d\'un circuit pour un camarade.'},
+ {id:'traducteur',ico:'🤖',nom:'Vers le vrai robot',desc:'Traduire un programme pour le vrai mBot.'},
+ {id:'explorateur',ico:'🔀',nom:'Explorateur',desc:'Voir tous les circuits d\'un niveau.'},
+ {id:'defi',ico:'📅',nom:'Défi relevé',desc:'Réussir un défi du jour.'},
+ {id:'collection',ico:'🎨',nom:'Collectionneur',desc:'Posséder 6 objets du garage.'},
+ {id:'niveau5',ico:'🚀',nom:'Niveau 5',desc:'Atteindre le niveau joueur 5.'},{id:'niveau10',ico:'🛰️',nom:'Niveau 10',desc:'Atteindre le niveau joueur 10.'}
+];
+function profilVide(){ return {etoiles:{},tele:{},xp:0,boulons:0,trophees:{},possede:['bleu','aucun','aucune'],equip:{couleur:'bleu',chapeau:'aucun',trainee:'aucune'},stats:{},defi:''}; }
+function stat(k,n){ joueur.stats[k]=(joueur.stats[k]||0)+(n||1); if(k==='pas'&&joueur.stats.pas>=10) trophee('debogueur'); sauver(); }
+function totalEtoiles(){ return Object.values(joueur.etoiles).reduce((a,b)=>a+b,0); }
+function nbCeintures(){ return CEINTURES.filter((c,k)=>ceintureObtenue(k)).length; }
+function toast(html,cls){ const z=$('#toasts'); if(!z) return; while(z.children.length>=4) z.firstChild.remove(); const d=document.createElement('div'); d.className='toast '+(cls||''); d.innerHTML=html; z.appendChild(d); setTimeout(()=>d.classList.add('out'),2600); setTimeout(()=>d.remove(),3100); }
+function gagner(xp,boulons,raison){
+  if(!joueur.prenom) return;
+  const avant=niveauDe(joueur.xp); joueur.xp+=xp; joueur.boulons+=boulons; const apres=niveauDe(joueur.xp);
+  toast('<b>'+raison+'</b><br>+'+xp+' XP'+(boulons?' · +'+boulons+' 🔩':''),'xp');
+  if(apres>avant){ setTimeout(()=>{ toast('<b>⬆️ Niveau '+apres+' !</b><br>Tu es maintenant <b>'+titreDe(apres)+'</b>','lvl'); [523,659,784,1046,1318].forEach((f,k)=>setTimeout(()=>son(f,.12,'triangle'),k*90)); },500); }
+  if(apres>=5) trophee('niveau5'); if(apres>=10) trophee('niveau10');
+  sauver();
+}
+function trophee(id){
+  if(!joueur.prenom||joueur.trophees[id]) return;
+  const t=TROPHEES.find(x=>x.id===id); if(!t) return;
+  joueur.trophees[id]=new Date().toISOString().slice(0,10); joueur.boulons+=50;
+  setTimeout(()=>{ toast('<span style="font-size:28px">'+t.ico+'</span><div><b>Trophée débloqué !</b><br>'+t.nom+' · +50 🔩</div>','tro'); [784,988,1175].forEach((f,k)=>setTimeout(()=>son(f,.14,'triangle'),k*110)); },300);
+  sauver();
+}
+function verifierTrophees(){
+  const e=Object.values(joueur.etoiles), trois=e.filter(x=>x>=3).length;
+  if(e.some(x=>x>=1)) trophee('premier');
+  CEINTURES.forEach((c,k)=>{ if(ceintureObtenue(k)) trophee('ce'+k); });
+  if(trois>=5) trophee('parfait'); if(trois>=10) trophee('parfait10'); if(totalEtoiles()>=NIVEAUX.length*3) trophee('legende');
+  if(Object.keys(joueur.tele).length>=5) trophee('pilote');
+  if(joueur.possede.filter(i=>BOUTIQUE.find(b=>b.id===i&&b.prix>0)).length>=6) trophee('collection');
+}
+/* défi du jour : un niveau débloqué, à réussir en 3 étoiles */
+function dateDuJour(){ return new Date().toISOString().slice(0,10); }
+function defiDuJour(){
+  const ouverts=NIVEAUX.map((n,i)=>i).filter(i=>debloque(i)); if(!ouverts.length) return null;
+  let h=0; const s=dateDuJour()+joueur.classe; for(const ch of s) h=(h*31+ch.charCodeAt(0))>>>0;
+  return ouverts[h%ouverts.length];
+}
+/* récompenses d'une victoire en mode programme */
+function recompenserVictoire(def,nb,et,avant){
+  if(def.custom){ trophee('architecte'); gagner(20,5,'Circuit perso réussi'); return; }
+  if(avant===0) gagner(60,10,'Niveau réussi');
+  if(et>avant) gagner(40*(et-avant),10*(et-avant),(et-avant)+' nouvelle(s) étoile(s)');
+  if(J.essais===1) { trophee('premiercoup'); if(avant===0) gagner(20,5,'Du premier coup !'); }
+  if(J.echecs>=5) trophee('perseverant');
+  if(def.par&&nb<def.par) trophee('econome');
+  if(defiDuJour()===J.idx&&et===3&&joueur.defi!==dateDuJour()){ joueur.defi=dateDuJour(); trophee('defi'); gagner(100,30,'📅 Défi du jour relevé'); }
+  verifierTrophees();
+}
+/* ---------- en-tête ---------- */
+function majJoueurBadge(){
+  const z=$('#badgeJ'); if(!z) return;
+  if(!joueur.prenom){ z.style.display='none'; return; } z.style.display='';
+  const n=niveauDe(joueur.xp), a=xpPour(n), b=xpPour(n+1), p=Math.round(100*(joueur.xp-a)/(b-a));
+  $('#hNiv').textContent='Niv. '+n+' · '+titreDe(n); $('#hXp').style.width=p+'%'; $('#hXpT').textContent=joueur.xp+' XP'; $('#hBoulons').textContent='🔩 '+joueur.boulons;
+}
+/* ---------- garage ---------- */
+function afficherGarage(){
+  const L=$('#garageListe'); L.innerHTML='';
+  Object.keys(TYPES_G).forEach(t=>{
+    const g=document.createElement('div'); g.className='rayon'; g.innerHTML='<h3>'+TYPES_G[t]+'</h3>';
+    const grille=document.createElement('div'); grille.className='objets';
+    BOUTIQUE.filter(o=>o.type===t).forEach(o=>{
+      const a=joueur.possede.includes(o.id), eq=joueur.equip[t]===o.id, b=document.createElement('button');
+      b.className='objet'+(eq?' eq':'')+(a?'':' achat');
+      const pastille=t==='couleur'?'<i style="background:'+(o.val==='guyane'?'linear-gradient(135deg,#16a34a 50%,#facc15 50%)':o.val)+'"></i>':'';
+      b.innerHTML=pastille+'<b>'+o.nom+'</b><span>'+(eq?'✅ Équipé':a?'Équiper':(o.prix+' 🔩'))+'</span>';
+      b.onmouseenter=()=>{ G.apercu={...joueur.equip,[t]:o.id}; }; b.onmouseleave=()=>{ G.apercu=null; };
+      b.onclick=()=>{
+        if(!a){ if(joueur.boulons<o.prix){ toast('Il te manque '+(o.prix-joueur.boulons)+' 🔩. Gagne des étoiles et des trophées !'); son(150,.15); return; }
+          joueur.boulons-=o.prix; joueur.possede.push(o.id); toast('<b>Acheté !</b><br>'+o.nom,'xp'); son(1046,.1,'triangle'); verifierTrophees(); }
+        joueur.equip[t]=o.id; sauver(); afficherGarage(); };
+      grille.appendChild(b); });
+    g.appendChild(grille); L.appendChild(g); });
+  $('#garageBoulons').textContent=joueur.boulons;
+}
+const G={apercu:null,ang:0};
+/* ---------- trophées ---------- */
+function afficherTrophees(){
+  const n=Object.keys(joueur.trophees).length;
+  $('#trophCompte').textContent=n+' / '+TROPHEES.length;
+  $('#trophListe').innerHTML=TROPHEES.map(t=>{ const d=joueur.trophees[t.id]; return '<div class="troph'+(d?' ok':'')+'"><span>'+(d?t.ico:'🔒')+'</span><b>'+t.nom+'</b><small>'+t.desc+(d?'<br>Obtenu le '+d.split('-').reverse().join('/'):'')+'</small></div>'; }).join('');
+}
+/* ---------- classements ---------- */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function profilsLocaux(){
+  const L=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!k||!k.startsWith('mbotMission_')) continue; try{ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.prenom) L.push(d); }catch(e){} } }catch(e){}
+  return L;
+}
+function ligneClassement(r,i,moi){
+  const coul=(BOUTIQUE.find(b=>b.id===r.couleur)||{}).val||'#2563eb';
+  return '<tr class="'+(moi?'moi':'')+'"><td class="rang">'+(i<3?['🥇','🥈','🥉'][i]:i+1)+'</td><td><i class="av" style="background:'+(coul==='guyane'?'linear-gradient(135deg,#16a34a 50%,#facc15 50%)':esc(coul))+'"></i> '+esc(r.prenom)+'</td><td>'+esc(r.classe)+'</td><td>Niv. '+niveauDe(+r.xp||0)+'</td><td class="num">'+(+r.xp||0)+'</td><td class="num">'+(+r.etoiles||0)+' ★</td><td class="num">'+(+r.ceintures||0)+' 🥋</td><td class="num">'+(+r.trophees||0)+' 🏆</td></tr>';
+}
+function tableClassement(rows){
+  if(!rows.length) return '<p class="aide">Personne pour l\'instant. Joue pour apparaître ici !</p>';
+  return '<table class="clt"><tr><th>#</th><th>Joueur</th><th>Classe</th><th>Niveau</th><th class="num">XP</th><th class="num">Étoiles</th><th class="num">Ceintures</th><th class="num">Trophées</th></tr>'
+   +rows.map((r,i)=>ligneClassement(r,i,r.prenom===joueur.prenom&&String(r.classe).toUpperCase()===joueur.classe)).join('')+'</table>';
+}
+let ongletClt='classe';
+async function afficherClassement(){
+  const Z=$('#cltContenu'); document.querySelectorAll('#cltOnglets button').forEach(b=>b.classList.toggle('on',b.dataset.o===ongletClt));
+  if(ongletClt==='poste'){
+    const rows=profilsLocaux().map(d=>({prenom:d.prenom,classe:d.classe,xp:d.xp||0,etoiles:Object.values(d.etoiles||{}).reduce((a,b)=>a+b,0),ceintures:CEINTURES.filter((c,k)=>NIVEAUX.filter(n=>n.ce===k).every(n=>((d.etoiles||{})[n.id]||0)>=1)).length,trophees:Object.keys(d.trophees||{}).length,couleur:(d.equip||{}).couleur})).sort((a,b)=>b.xp-a.xp);
+    Z.innerHTML='<p class="aide">Tous les joueurs qui ont joué sur <b>cet ordinateur</b>.</p>'+tableClassement(rows); return;
+  }
+  if(!CONF.url||!CONF.cle){ Z.innerHTML='<p class="aide">Le classement en ligne n\'est pas activé sur cette version (jeu hors ligne). Utilise l\'onglet « Ce poste ».</p>'; return; }
+  if(!joueur.code){ Z.innerHTML='<p class="aide">Pour apparaître dans le classement en ligne, entre le <b>code de classe</b> donné par ton professeur (bouton ✏️ à côté de ton prénom).</p>'; return; }
+  Z.innerHTML='<p class="aide">Chargement…</p>';
+  try{ await synchroMaintenant(); const rows=await rpc('mbot_classement',{p_code:joueur.code}); let r=Array.isArray(rows)?rows:[];
+    if(ongletClt==='classe') r=r.filter(x=>String(x.classe).toUpperCase()===joueur.classe);
+    Z.innerHTML='<p class="aide">'+(ongletClt==='classe'?'Ta classe : <b>'+esc(joueur.classe)+'</b>':'Tout l\'établissement : <b>'+esc(joueur.etab||'')+'</b>')+' · mis à jour à l\'instant</p>'+tableClassement(r);
+  }catch(e){ Z.innerHTML='<p class="aide">Classement en ligne injoignable pour le moment (pas d\'internet ?). Ta progression est gardée sur ce poste.</p>'; }
+}
+/* ---------- en ligne (Supabase, fonctions RPC) ---------- */
+const CONF=Object.assign({url:'',cle:''},window.MBOT_CONFIG||{});
+async function rpc(fn,args){
+  const r=await fetch(CONF.url.replace(/\/$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:CONF.cle,Authorization:'Bearer '+CONF.cle,'Content-Type':'application/json'},body:JSON.stringify(args)});
+  if(!r.ok) throw new Error('HTTP '+r.status); return r.json();
+}
+let synchroT=null;
+function etatLigne(t){ const z=$('#hLigne'); if(z){ z.textContent=t; } }
+async function synchroMaintenant(){
+  if(!CONF.url||!CONF.cle||!joueur.code||!joueur.prenom) return;
+  try{ const r=await rpc('mbot_envoyer',{p_code:joueur.code,p_prenom:joueur.prenom,p_classe:joueur.classe,p_xp:joueur.xp,p_etoiles:totalEtoiles(),p_ceintures:nbCeintures(),p_trophees:Object.keys(joueur.trophees).length,p_couleur:joueur.equip.couleur,p_chapeau:joueur.equip.chapeau});
+    etatLigne(r==='ok'?'🌐':r==='code_inconnu'?'⚠️ code':'⚠️'); if(r==='code_inconnu') toast('Code de classe inconnu : vérifie-le avec ton professeur.');
+  }catch(e){ etatLigne('📴'); }
+}
+function planifierSynchro(){ if(!CONF.url||!CONF.cle||!joueur.code) return; clearTimeout(synchroT); synchroT=setTimeout(synchroMaintenant,2500); }
+/* ---------- dessin des accessoires ---------- */
+function couleurCorps(R){ const sk=R.skin; if(!sk) return R.coul; const o=BOUTIQUE.find(b=>b.id===sk.couleur); return o?o.val:R.coul; }
+function dessinerTrainee(c,cs,R){
+  const sk=R.skin; if(!sk||sk.trainee==='aucune'||!R.trace) return;
+  const now=performance.now(); R.trace=R.trace.filter(p=>now-p.t<700);
+  R.trace.forEach((p,k)=>{ const a=1-(now-p.t)/700; c.globalAlpha=a*0.8;
+    c.fillStyle=sk.trainee==='flammes'?(k%2?'#f97316':'#facc15'):sk.trainee==='arcenciel'?'hsl('+((p.t/4)%360)+',90%,55%)':'#fde68a';
+    const r=cs*(sk.trainee==='etincelles'?0.06:0.12)*a+1; c.beginPath(); c.arc(p.x*cs+cs/2+(sk.trainee==='etincelles'?Math.sin(p.t)*cs*0.15:0),p.y*cs+cs/2+(sk.trainee==='etincelles'?Math.cos(p.t)*cs*0.15:0),r,0,7); c.fill(); });
+  c.globalAlpha=1;
+}
+function dessinerChapeau(c,s,h,R){
+  const sk=R.skin; if(!sk) return; const t=sk.chapeau, now=performance.now();
+  if(t==='antenne'){ c.strokeStyle='#334155'; c.lineWidth=2; c.beginPath(); c.moveTo(0,s*0.05); c.lineTo(0,s*0.38); c.stroke(); c.fillStyle='#ef4444'; c.beginPath(); c.arc(0,s*0.38,s*0.06,0,7); c.fill(); }
+  if(t==='casquette'){ c.fillStyle='#dc2626'; c.beginPath(); c.arc(0,s*0.08,s*0.2,0,7); c.fill(); c.fillRect(-s*0.16,-s*0.2,s*0.32,s*0.14); }
+  if(t==='helice'){ c.save(); c.translate(0,s*0.1); c.rotate(now/90); c.fillStyle='#f59e0b'; c.fillRect(-s*0.32,-s*0.04,s*0.64,s*0.08); c.fillStyle='#3b82f6'; c.fillRect(-s*0.04,-s*0.32,s*0.08,s*0.64); c.restore(); c.fillStyle='#111827'; c.beginPath(); c.arc(0,s*0.1,s*0.05,0,7); c.fill(); }
+  if(t==='couronne'){ c.fillStyle='#facc15'; c.strokeStyle='#a16207'; c.lineWidth=1.5; c.beginPath(); const y=s*0.1,w=s*0.26; c.moveTo(-w,y+s*0.1); c.lineTo(-w,y-s*0.08); c.lineTo(-w/2,y); c.lineTo(0,y-s*0.12); c.lineTo(w/2,y); c.lineTo(w,y-s*0.08); c.lineTo(w,y+s*0.1); c.closePath(); c.fill(); c.stroke(); }
+  if(t==='fusee'){ c.fillStyle='#f8fafc'; c.strokeStyle='#334155'; c.lineWidth=1.5; c.beginPath(); c.moveTo(0,-s*0.12); c.quadraticCurveTo(s*0.1,s*0.05,s*0.08,s*0.32); c.lineTo(-s*0.08,s*0.32); c.quadraticCurveTo(-s*0.1,s*0.05,0,-s*0.12); c.fill(); c.stroke(); c.fillStyle='#3b82f6'; c.beginPath(); c.arc(0,s*0.08,s*0.035,0,7); c.fill(); c.fillStyle='#f97316'; c.beginPath(); c.moveTo(-s*0.05,s*0.32); c.lineTo(0,s*0.32+s*0.12*(0.7+0.3*Math.sin(now/60))); c.lineTo(s*0.05,s*0.32); c.fill(); }
+}
+
+/* =========================================================
+   BOUCLE D'AFFICHAGE
+   ========================================================= */
+function rendu(){
+  try{
+    if(ecranCourant==='jeu'&&J.M) dessiner($('#cv'),J.M,[J.R]);
+    else if(ecranCourant==='duel'&&D.M) dessiner($('#cvD'),D.M,[D.A,D.B],{tick:D.mode==='tele'?D.ticks:D.A.ticks,h:0.62});
+    else if(ecranCourant==='garage'){ const M=construireMonde({map:['...','.S.','...'],dir:0},0); G.ang+=0.6; const R=nouveauRobot(M,1,1,0); R.ang=G.ang; R.skin=G.apercu||joueur.equip; R.led='vert'; dessiner($('#cvG'),M,[R],{h:0.45}); }
+    else if(ecranCourant==='atelier'&&AT.g){ const map=AT.g.map(l=>l.join('')); const M=construireMonde({map,dir:AT.dir,ligne:true},0); const s=M.start; dessiner($('#cvA'),M,s?[nouveauRobot(M,s.x,s.y,AT.dir)]:[],{h:0.6}); }
+  }catch(e){ console.error(e); }
+  requestAnimationFrame(rendu);
+}
+majEntete(); requestAnimationFrame(rendu);
+
+/* accès pour les tests automatiques */
+window.MBOT={NIVEAUX,DUELS,simuler,compiler,construireMonde};
+</script>
+</body></html>
