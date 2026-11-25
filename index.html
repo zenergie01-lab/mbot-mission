@@ -100,6 +100,20 @@ textarea{width:100%;font:12px monospace;min-height:70px;border-radius:8px;border
 /* modale */
 .modale{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:20}
 .modale.on{display:flex}
+#bAvis{position:fixed;left:14px;bottom:14px;z-index:15;background:#7c3aed;color:#fff;border:0;border-radius:999px;padding:11px 18px;font-weight:800;font-size:16px;box-shadow:0 6px 18px rgba(124,58,237,.35);cursor:pointer}
+#bAvis:hover{background:#6d28d9}
+.avis h2{margin:0 0 4px}
+.avis .grp{margin:12px 0 4px;font-weight:700}
+.avis .choix{display:flex;flex-wrap:wrap;gap:6px}
+.avis .choix button{border:2px solid #cbd5e1;background:#fff;border-radius:10px;padding:7px 12px;font:inherit;font-weight:600;cursor:pointer}
+.avis .choix button.on{border-color:#7c3aed;background:#ede9fe;color:#4c1d95}
+.avis .etoilesA button{font-size:30px;border:0;background:none;color:#cbd5e1;cursor:pointer;padding:0 2px}
+.avis .etoilesA button.on{color:#f59e0b}
+.avis textarea,.avis input[type=email]{font:inherit;font-size:16px;width:100%;border:2px solid #cbd5e1;border-radius:10px;padding:8px 10px;box-sizing:border-box}
+.avis textarea{min-height:120px;resize:vertical}
+.avis .compteur{font-size:12px;color:#64748b;text-align:right}
+.avis .piege{position:absolute;left:-9999px}
+@media print{#bAvis{display:none}}
 .modale .boite{background:#fff;border-radius:16px;max-width:760px;width:92vw;max-height:88vh;overflow:auto;padding:18px 22px}
 .modale pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:12px;font-size:14px;white-space:pre-wrap}
 .reglages{display:flex;gap:14px;flex-wrap:wrap;font-size:14px}.reglages input{width:70px;font:inherit}
@@ -264,6 +278,7 @@ table.clt .num{text-align:right;white-space:nowrap}table.clt tr.moi td{backgroun
 
 <div id="toasts"></div>
 <!-- MODALE -->
+<button id="bAvis" title="Donner ton avis, signaler un problème, proposer une idée">💬 Ton avis</button>
 <div class="modale" id="modale"><div class="boite" id="mBoite"></div></div>
 
 <script src="config.js"></script>
@@ -1491,6 +1506,57 @@ function tableChrono(rows){
    :'<table class="clt"><tr><th>#</th><th>Joueur</th><th>Classe</th><th class="num">Temps</th></tr>'+L.map((r,i)=>'<tr class="'+(r.prenom===joueur.prenom&&String(r.classe).toUpperCase()===joueur.classe?'moi':'')+'"><td class="rang">'+(i<3?['🥇','🥈','🥉'][i]:i+1)+'</td><td>'+esc(r.prenom)+'</td><td>'+esc(r.classe)+'</td><td class="num">⏱ '+fmtTemps(+r.temps[id])+'</td></tr>').join('')+'</table>';
   return sel+t;
 }
+
+
+/* =========================================================
+   AVIS ET COMMENTAIRES (rangés dans Supabase, lus par le professeur)
+   ========================================================= */
+const AV_PROFILS=[['eleve','🧑‍🎓 Élève'],['enseignant','👩‍🏫 Enseignant(e)'],['parent','👪 Parent'],['autre','🙂 Autre']];
+const AV_SUJETS=[['jeu','🎮 Le jeu en général'],['niveaux','🗺️ Les circuits'],['programme','🧩 Les blocs / le programme'],['vrai_mbot','🤖 Pour le vrai mBot'],['classement','📊 Classement / chrono'],['duel','⚔️ Duel 2 joueurs'],['garage','🛠 Garage / trophées'],['bug','🐞 Un bug'],['idee','💡 Une idée'],['autre','✉️ Autre / nous contacter']];
+const AV_DIFF=[['trop_facile','😴 Trop facile'],['bien','👍 Bien dosé'],['trop_dur','😰 Trop difficile']];
+function ouvrirAvis(){
+  const A={profil:joueur.prenom?'eleve':'',sujet:'',note:0,diff:''};
+  const ch=(id,L)=>'<div class="choix" id="'+id+'">'+L.map(([k,t])=>'<button type="button" data-k="'+k+'">'+t+'</button>').join('')+'</div>';
+  modale('<div class="avis"><h2>💬 Ton avis compte !</h2><p class="aide" style="margin:0">Une idée, un bug, un circuit trop dur ? Dis-le-nous : chaque message aide à améliorer mBot Mission.</p>'
+   +'<div class="grp">Je suis…</div>'+ch('avP',AV_PROFILS)
+   +'<div class="grp">Mon avis concerne…</div>'+ch('avS',AV_SUJETS)
+   +'<div class="grp">Ma note pour l\'application <small style="font-weight:400">(facultatif)</small></div><div class="etoilesA" id="avN">'+[1,2,3,4,5].map(n=>'<button type="button" data-n="'+n+'" title="'+n+'/5">★</button>').join('')+'</div>'
+   +'<div class="grp">La difficulté <small style="font-weight:400">(facultatif)</small></div>'+ch('avD',AV_DIFF)
+   +'<div class="grp"><label for="avM">Mon message</label></div><textarea id="avM" maxlength="1500" placeholder="Ce que j\'aime, ce qui me gêne, ce que je proposerais… Pour un bug : sur quel circuit, et ce qui s\'est passé."></textarea><div class="compteur" id="avC">0 / 1500</div>'
+   +'<div id="avContact" style="display:none"><div class="grp"><label for="avE">Mon courriel pour être recontacté(e)</label> <small style="font-weight:400">(facultatif)</small></div><input type="email" id="avE" maxlength="120" placeholder="prenom.nom@ac-guyane.fr"></div>'
+   +'<input class="piege" id="avPiege" tabindex="-1" autocomplete="off" aria-hidden="true">'
+   +'<p class="rgpd" id="avRgpd">🔒 N\'écris ni ton nom de famille, ni ton adresse, ni ton téléphone. Ton message est anonyme : seul le collège (si tu as entré son code), ta classe et le circuit en cours sont joints.</p>'
+   +'<p id="avErr" style="color:#b91c1c;font-weight:700;margin:6px 0 0"></p>'
+   +'<p style="text-align:right;margin:10px 0 0"><button class="btn" onclick="fermerModale()">Annuler</button> <button class="btn p" id="avGo">📨 Envoyer</button></p></div>');
+  const sel=(id,cle)=>{ const z=$('#'+id); z.querySelectorAll('button').forEach(b=>{ b.classList.toggle('on',b.dataset.k===A[cle]); b.onclick=()=>{ A[cle]=A[cle]===b.dataset.k&&cle==='diff'?'':b.dataset.k; sel(id,cle); if(cle==='profil') majProfil(); }; }); };
+  const majProfil=()=>{ const ens=A.profil==='enseignant'||A.profil==='parent'||A.profil==='autre'; $('#avContact').style.display=ens?'':'none';
+    $('#avRgpd').textContent=A.profil==='eleve'||!A.profil?'🔒 N\'écris ni ton nom de famille, ni ton adresse, ni ton téléphone. Ton message est anonyme : seul le collège (si tu as entré son code), ta classe et le circuit en cours sont joints.':'🔒 Le courriel est facultatif et sert uniquement à vous répondre. Les avis sont lus par l\'enseignant qui gère l\'application et effacés en fin d\'année scolaire.'; };
+  sel('avP','profil'); sel('avS','sujet'); sel('avD','diff'); majProfil();
+  if(ecranCourant==='jeu'&&J.def&&!J.def.custom){ A.sujet='niveaux'; sel('avS','sujet'); }
+  const etoilesN=()=>$('#avN').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.n<=A.note));
+  $('#avN').querySelectorAll('button').forEach(b=>b.onclick=()=>{ A.note=A.note===+b.dataset.n?0:+b.dataset.n; etoilesN(); });
+  $('#avM').oninput=()=>{ $('#avC').textContent=$('#avM').value.length+' / 1500'; };
+  $('#avGo').onclick=async()=>{
+    const msg=$('#avM').value.trim(), err=t=>{ $('#avErr').textContent=t; };
+    if(!A.profil) return err('Choisis qui tu es (élève, enseignant…).');
+    if(!A.sujet) return err('Choisis le sujet de ton avis.');
+    if(msg.length<5) return err('Écris au moins quelques mots dans le message.');
+    if($('#avPiege').value) { fermerModale(); return; }
+    const courriel=$('#avE').value.trim();
+    if(courriel&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel)) return err('Le courriel ne semble pas valide (ou laisse la case vide).');
+    const corps={p_profil:A.profil,p_sujet:A.sujet,p_note:A.note||null,p_difficulte:A.diff||null,p_message:msg,p_contact:A.profil==='eleve'?null:(courriel||null),p_code:joueur.code||null,p_classe:joueur.classe||null,p_niveau:(ecranCourant==='jeu'&&J.def&&!J.def.custom)?J.def.id:null};
+    if(!enLigne()){ const t='Avis mBot Mission\n'+Object.entries(corps).filter(([k,v])=>v).map(([k,v])=>k.replace('p_','')+' : '+v).join('\n');
+      modale('<p style="font-size:17px">Cette version du jeu est hors ligne : l\'avis ne peut pas être envoyé directement. Copie-le et donne-le à ton professeur.</p><pre id="avTxt">'+esc(t)+'</pre><p style="text-align:right"><button class="btn" id="avCop">📋 Copier</button> <button class="btn p" onclick="fermerModale()">OK</button></p>');
+      $('#avCop').onclick=()=>{ try{ navigator.clipboard.writeText(t); $('#avCop').textContent='✅ Copié'; }catch(e){} }; return; }
+    $('#avGo').disabled=true; $('#avGo').textContent='Envoi…';
+    try{ const r=await rpc('mbot_avis',corps);
+      if(r==='ok'){ modale('<div class="victoire">🙏 Merci !</div><p style="text-align:center;font-size:18px">Ton avis est bien arrivé. Il servira à faire évoluer mBot Mission.</p><p style="text-align:center"><button class="btn p" onclick="fermerModale()">Retour au jeu</button></p>'); if(joueur.prenom&&!joueur.avisDonne){ joueur.avisDonne=true; gagner(15,10,'💬 Merci pour ton avis'); } return; }
+      err(r==='trop'?'Beaucoup de messages en ce moment : réessaie dans quelques minutes.':'Le message n\'a pas pu être enregistré ('+r+').');
+    }catch(e){ err('Envoi impossible pour le moment (pas d\'internet ?). Réessaie plus tard.'); }
+    $('#avGo').disabled=false; $('#avGo').textContent='📨 Envoyer';
+  };
+}
+$('#bAvis').onclick=ouvrirAvis;
 
 /* =========================================================
    BOUCLE D'AFFICHAGE

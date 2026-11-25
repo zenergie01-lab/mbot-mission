@@ -52,3 +52,18 @@ Sans clé, le jeu fonctionne entièrement hors ligne (classement « Ce poste »)
 
 ---
 Conçu pour la séquence « mBot : du robot qui étonne au robot que je programme » — Technologie cycle 4.
+
+
+## Avis et commentaires (v3)
+
+Le bouton violet **💬 Ton avis** (en bas à gauche) ouvre un formulaire :
+- qui je suis ;
+- le sujet ;
+- une note sur 5 ;
+- la difficulté ;
+- un message ;
+- un courriel facultatif, jamais demandé aux élèves.
+
+Les avis sont enregistrés dans la table `mbot.avis` de Supabase, via le relais `/api/rpc` (fonction `mbot_avis`). Ils ne sont pas lisibles depuis le jeu.
+
+**Lire les avis** : Supabase Studio → Table Editor → schéma `mbot` → `avis`, ou les requêtes en fin de `supabase/mbot_mission_v3_avis.sql`.

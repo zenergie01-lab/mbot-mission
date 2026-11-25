@@ -1,6 +1,6 @@
 // Relais vers le classement Supabase (évite le blocage CORS et garde la clé côté serveur).
-// Seules les 3 fonctions du jeu sont autorisées.
-const AUTORISEES = new Set(['mbot_envoyer', 'mbot_classement', 'mbot_etablissement', 'mbot_ligue_colleges', 'mbot_ligue_classes']);
+// Seules les fonctions du jeu listées ci-dessous sont autorisées.
+const AUTORISEES = new Set(['mbot_envoyer', 'mbot_classement', 'mbot_etablissement', 'mbot_ligue_colleges', 'mbot_ligue_classes', 'mbot_avis']);
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   const url = process.env.SUPABASE_URL, cle = process.env.SUPABASE_ANON_KEY;
   if (!url || !cle) return res.status(503).json({ erreur: 'classement non configuré' });
   const corps = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-  if (corps.length > 2000) return res.status(413).json({ erreur: 'requête trop grande' });
+  if (corps.length > 5000) return res.status(413).json({ erreur: 'requête trop grande' });
   try {
     const r = await fetch(url.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, {
       method: 'POST',
