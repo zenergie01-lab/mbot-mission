@@ -79,3 +79,30 @@ end $$;
 --   update mbot.avis set traite = true, reponse = 'corrigé le 02/12' where id = 12;
 -- Effacer les avis en fin d'année :
 --   delete from mbot.avis;
+
+-- ---------------------------------------------------------------------
+--  Notification par e-mail (n8n) à chaque nouvel avis
+--  Workflow n8n « mBot Mission — avis → e-mail » (webhook + Gmail).
+--  Remplacer SECRET_A_RENSEIGNER par le secret vérifié dans le nœud
+--  « Préparer l'e-mail » du workflow (ne pas le publier sur GitHub).
+--  Si n8n est injoignable, l'avis reste enregistré.
+-- ---------------------------------------------------------------------
+create or replace function mbot.avis_notifier() returns trigger
+language plpgsql security definer set search_path = mbot, net, pg_temp as $f$
+begin
+  begin
+    perform net.http_post(
+      url := 'https://n8n.srv999617.hstgr.cloud/webhook/8af90386-a156-40b7-a89e-6ae2d1cb0670',
+      body := jsonb_build_object('id', new.id, 'cree_le', new.cree_le, 'profil', new.profil, 'sujet', new.sujet, 'note', new.note,
+                'difficulte', new.difficulte, 'message', new.message, 'contact', new.contact,
+                'etablissement', new.etablissement, 'classe', new.classe, 'niveau', new.niveau),
+      headers := jsonb_build_object('Content-Type', 'application/json', 'x-mbot-secret', 'SECRET_A_RENSEIGNER'),
+      timeout_milliseconds := 5000);
+  exception when others then null;
+  end;
+  return new;
+end $f$;
+drop trigger if exists avis_notifier on mbot.avis;
+create trigger avis_notifier after insert on mbot.avis for each row execute function mbot.avis_notifier();
+-- Couper les e-mails sans toucher aux avis :  alter table mbot.avis disable trigger avis_notifier;
+-- Les rallumer :                              alter table mbot.avis enable trigger avis_notifier;
