@@ -1005,7 +1005,7 @@ $('#bBilan').onclick=()=>{
    Sources vérifiées : bibliothèque Makeblock (MeMCore.h, MeLineFollower),
    notices académiques (Bordeaux, Rennes, Limoges) — voir README.
    ========================================================= */
-let REG={sCase:0.7,sQuart:0.6,puiss:50,seuil:300,dist:10,court:null};
+let REG={sCase:0.7,sQuart:0.6,puiss:50,seuil:300,dist:10,court:null,depart:'demarre'};
 try{ Object.assign(REG,JSON.parse(store('mbotReglages')||'{}')); }catch(e){}
 const LED_RVB={rouge:[255,0,0],vert:[0,255,0],bleu:[0,0,255],blanc:[255,255,255],'éteint':[0,0,0]};
 function traductions(prog,o){
@@ -1015,20 +1015,20 @@ function traductions(prog,o){
     sombre:'(intensité lumineuse du capteur de lumière (embarqué)) < '+o.seuil,feu:'⚠ feu rouge : pas de capteur'};
   const condC={obstacle:'ultrason.distanceCm() < DISTANCE_OBSTACLE',murD:'false /* pas de capteur à droite sur le mBot */',murG:'false /* pas de capteur à gauche sur le mBot */',
     ligne:'suiveur.readSensors() == 0',ligneG:'suiveur.readSensors() == 1',ligneD:'suiveur.readSensors() == 2',sombre:'lumiere.read() < SEUIL_LUMIERE',feu:'false /* pas de feu sur le vrai circuit */'};
-  const B=['lorsque le bouton embarqué est appuyé'], C=[], alertes=new Set(['reglage']); let prof=0, capt=0, k=0; const pile=[];
+  const B=[o.depart==='bouton'?'Lorsque le bouton embarqué est appuyé':'Lorsque le mBot(mcore) démarre'], C=[], alertes=new Set(['reglage']); let prof=0, capt=0, k=0; const pile=[];
   const LB=t=>B.push('   '.repeat(prof+1)+t), LC=t=>C.push('  '.repeat(prof+1)+t);
   prog.forEach(b=>{
     if(b.t==='fin'){ const t=pile.pop(); prof=Math.max(0,prof-1); if(t==='jusqua') capt--; LC('}'); return; }
     if(b.t==='sinon'){ prof=Math.max(0,prof-1); LB('sinon'); LC('} else {'); prof++; return; }
     const crt=o.court&&capt>0, n=b.n||1;
     switch(b.t){
-      case 'avancer': if(crt){ LB('avancer à '+o.puiss+' % de puissance'); LC('roues(P, P); delay(20);'); } else { LB('avancer à '+o.puiss+' % de puissance pendant '+f(n*o.sCase)+' secondes'); LC('avancer('+Math.round(n*o.sCase*1000)+');'); } break;
-      case 'reculer': if(crt){ LB('reculer à '+o.puiss+' % de puissance'); LC('roues(-P, -P); delay(20);'); } else { LB('reculer à '+o.puiss+' % de puissance pendant '+f(n*o.sCase)+' secondes'); LC('reculer('+Math.round(n*o.sCase*1000)+');'); } break;
-      case 'gauche': if(crt){ LB('tourner à gauche à '+o.puiss+' % de puissance'); LC('roues(-P, P); delay(20);'); } else { LB('tourner à gauche à '+o.puiss+' % de puissance pendant '+f(o.sQuart)+' secondes'); LC('tournerGauche();'); } break;
-      case 'droite': if(crt){ LB('tourner à droite à '+o.puiss+' % de puissance'); LC('roues(P, -P); delay(20);'); } else { LB('tourner à droite à '+o.puiss+' % de puissance pendant '+f(o.sQuart)+' secondes'); LC('tournerDroite();'); } break;
-      case 'led': { const c=LED_RVB[b.c]||[0,0,0]; LB(b.c==='éteint'?'éteindre les LED (toutes)':'allumer les LED (toutes) en '+b.c); LC('couleur('+c.join(', ')+');'); break; }
+      case 'avancer': if(crt){ LB('roue gauche tourne à '+o.puiss+' % de puissance, roue droite à '+o.puiss+' % de puissance'); LC('roues(P, P); delay(20);'); } else { LB('avancer à '+o.puiss+' % de puissance pendant '+f(n*o.sCase)+' secondes'); LC('avancer('+Math.round(n*o.sCase*1000)+');'); } break;
+      case 'reculer': if(crt){ LB('roue gauche tourne à -'+o.puiss+' % de puissance, roue droite à -'+o.puiss+' % de puissance'); LC('roues(-P, -P); delay(20);'); } else { LB('reculer à '+o.puiss+' % de puissance pendant '+f(n*o.sCase)+' secondes'); LC('reculer('+Math.round(n*o.sCase*1000)+');'); } break;
+      case 'gauche': if(crt){ LB('roue gauche tourne à -'+o.puiss+' % de puissance, roue droite à '+o.puiss+' % de puissance'); LC('roues(-P, P); delay(20);'); } else { LB('tourner à gauche à '+o.puiss+' % de puissance pendant '+f(o.sQuart)+' secondes'); LC('tournerGauche();'); } break;
+      case 'droite': if(crt){ LB('roue gauche tourne à '+o.puiss+' % de puissance, roue droite à -'+o.puiss+' % de puissance'); LC('roues(P, -P); delay(20);'); } else { LB('tourner à droite à '+o.puiss+' % de puissance pendant '+f(o.sQuart)+' secondes'); LC('tournerDroite();'); } break;
+      case 'led': { const c=LED_RVB[b.c]||[0,0,0]; LB('LED tout affiche la couleur '+b.c+(b.c==='éteint'?' (noir)':'')); LC('couleur('+c.join(', ')+');'); break; }
       case 'bip': LB('jouer la note C5 pendant 0,25 temps'); LC('bip();'); break;
-      case 'attendre': LB('attendre '+n+' secondes'); LC('arret(); delay('+n*1000+');'); break;
+      case 'attendre': LB('attendre '+n+' secs'); LC('arret(); delay('+n*1000+');'); break;
       case 'repeter': k++; LB('répéter '+n+' fois'); LC('for (int i'+k+' = 0; i'+k+' < '+n+'; i'+k+'++) {'); pile.push('repeter'); prof++; break;
       case 'jusqua': LB('répéter indéfiniment'); LC('while (true) {   // le vrai mBot ne sait pas où est la sortie'); pile.push('jusqua'); capt++; prof++; alertes.add('jusqua'); break;
       case 'si': LB('si < '+condB[b.cond]+' > alors'); LC('if ('+condC[b.cond]+') {'); pile.push('si'); prof++;
@@ -1039,7 +1039,7 @@ function traductions(prog,o){
   const ino=`// Programme généré par mBot Mission — à téléverser avec l'IDE Arduino
 // Bibliothèque nécessaire : Makeblock-Libraries (github.com/Makeblock-official/Makeblock-Libraries)
 // à installer dans l'IDE Arduino : Croquis > Inclure une bibliothèque > Ajouter la bibliothèque .ZIP
-// Carte : Arduino Uno · le mBot démarre quand on appuie sur le bouton de la carte.
+// Carte : Arduino Uno · ${o.depart==='bouton'?'le programme démarre quand on appuie sur le bouton de la carte':'le programme démarre à la mise sous tension'}.
 #include <MeMCore.h>
 
 MeDCMotor moteurGauche(M1);          // moteur gauche (sens avant = valeur négative)
@@ -1072,8 +1072,7 @@ void setup() {
   led.setpin(13);
   arret();
   couleur(0, 0, 0);
-  while (analogRead(A7) > 100) { }   // attendre l'appui sur le bouton de la carte
-  delay(300);
+${o.depart==='bouton'?'  while (analogRead(A7) > 100) { }   // attendre l\'appui sur le bouton de la carte\n  delay(300);':'  delay(500);                          // démarrage du mBot'}
   programme();
   arret();
 }
@@ -1092,15 +1091,114 @@ const ALERTES={
   obstacle:'Le capteur à ultrasons mesure de 3 cm à 4 m environ. Vérifie qu\'il est bien branché sur le port 3.',
   court:'Mouvements courts activés : dans la boucle infinie, le robot avance sans durée et revérifie ses capteurs plusieurs fois par seconde, comme un vrai suiveur de ligne.'
 };
+/* =========================================================
+   IMAGE DES BLOCS mBlock 5 (à recopier dans mBlock)
+   Libellés relevés dans mBlock 5 (mBot / mCore, interface en français).
+   ≈ = libellé proche, à vérifier dans ta version de mBlock.
+   ========================================================= */
+const MB_COUL={ev:['#FFBF00','#CC9900'],ac:['#4C97FF','#3373CC'],mo:['#9966FF','#774DCB'],ct:['#FFAB19','#CF8B17'],de:['#5CB1D6','#2E8EB8'],op:['#59C059','#389438'],ko:['#9CA3AF','#6B7280']};
+const MB_LED={rouge:'#FF0000',vert:'#00CC00',bleu:'#0000FF',blanc:'#FFFFFF','éteint':'#000000'};
+function mbArbre(prog,o){
+  const {arbre}=compiler(prog), P=o.puiss, N=v=>({t:'num',v:String(Math.round(v*100)/100)}), DD=v=>({t:'dd',v}), C=v=>({t:'col',v});
+  const cond=c=>{
+    if(c==='obstacle') return {t:'bool',parts:[{t:'rep',l:'distance du capteur à ultrasons',dd:'port3',approx:1},'<',N(o.dist)]};
+    if(c==='ligne') return {t:'bool',parts:[{t:'rep',l:'valeur du suiveur de ligne',dd:'port2',approx:1},'=',N(0)]};
+    if(c==='ligneG') return {t:'bool',parts:[{t:'rep',l:'valeur du suiveur de ligne',dd:'port2',approx:1},'=',N(1)]};
+    if(c==='ligneD') return {t:'bool',parts:[{t:'rep',l:'valeur du suiveur de ligne',dd:'port2',approx:1},'=',N(2)]};
+    if(c==='sombre') return {t:'bool',parts:[{t:'rep',l:'intensité lumineuse du capteur de lumière',dd:'embarqué',approx:1},'<',N(o.seuil)]};
+    return {t:'bool',ko:1,parts:[c==='feu'?'feu rouge : pas de capteur':'mur sur le côté : pas de capteur']};
+  };
+  const conv=(liste,capt)=>{ const out=[]; liste.forEach(nd=>{ const crt=o.court&&capt, n=nd.n||1;
+    switch(nd.t){
+      case 'avancer': out.push(crt?{c:'ac',k:['roue gauche tourne à',N(P),'% de puissance, roue droite à',N(P),'% de puissance']}:{c:'ac',k:['avancer à',N(P),'% de puissance pendant',N(n*o.sCase),'secondes']}); break;
+      case 'reculer': out.push(crt?{c:'ac',k:['roue gauche tourne à',N(-P),'% de puissance, roue droite à',N(-P),'% de puissance']}:{c:'ac',k:['reculer à',N(P),'% de puissance pendant',N(n*o.sCase),'secondes']}); break;
+      case 'gauche': out.push(crt?{c:'ac',k:['roue gauche tourne à',N(-P),'% de puissance, roue droite à',N(P),'% de puissance']}:{c:'ac',k:['tourner à gauche à',N(P),'% de puissance pendant',N(o.sQuart),'secondes']}); break;
+      case 'droite': out.push(crt?{c:'ac',k:['roue gauche tourne à',N(P),'% de puissance, roue droite à',N(-P),'% de puissance']}:{c:'ac',k:['tourner à droite à',N(P),'% de puissance pendant',N(o.sQuart),'secondes']}); break;
+      case 'led': out.push({c:'mo',k:['LED',DD('tout'),'affiche la couleur',C(MB_LED[nd.c]||'#000')]}); break;
+      case 'bip': out.push({c:'mo',approx:1,k:['jouer la note',DD('C5'),'pendant',N(0.25),'temps']}); break;
+      case 'attendre': out.push({c:'ct',k:['attendre',N(n),'secs']}); break;
+      case 'repeter': out.push({c:'ct',boucle:1,k:['répéter',N(n)],corps:conv(nd.corps,capt)}); break;
+      case 'jusqua': out.push({c:'ct',boucle:1,k:['répéter indéfiniment'],corps:conv(nd.corps,true)}); break;
+      case 'si': out.push({c:'ct',boucle:1,k:['si',cond(nd.cond),'alors'],corps:conv(nd.corps,capt),sinon:nd.iSinon!==undefined?conv(nd.sinon,capt):null}); break;
+    } }); return out; };
+  const tete=o.depart==='bouton'?{c:'ev',chapeau:1,approx:1,k:['Lorsque le bouton embarqué est',DD('appuyé')]}:{c:'ev',chapeau:1,k:['Lorsque le mBot(mcore) démarre']};
+  return [tete,...conv(arbre,false)];
+}
+function mbDessiner(blocs,titre){
+  const F='bold 15px "Segoe UI",Helvetica,Arial,sans-serif', cv=document.createElement('canvas'), c=cv.getContext('2d');
+  const H=40,HB=48,NOTCH=16,BRAS=16,BAS=26,MARGE=46;
+  c.font=F;
+  const tw=s=>{ c.font=F; return c.measureText(s).width; };
+  /* mesure d'un jeton */
+  const mesTok=t=>{ if(typeof t==='string') return tw(t); if(t.t==='num') return Math.max(34,tw(t.v)+20); if(t.t==='dd') return tw(t.v)+34; if(t.t==='col') return 46;
+    if(t.t==='rep') return tw(t.l)+tw(t.dd)+56; if(t.t==='bool') return t.parts.reduce((a,p)=>a+mesTok(p)+8,0)+28; return 0; };
+  const larg=b=>b.k.reduce((a,t)=>a+mesTok(t)+8,0)+24;
+  const haut=b=>b.k.some(t=>t&&t.t==='bool')?HB:H;
+  const hauteurListe=L=>L.reduce((a,b)=>a+hauteurBloc(b),0);
+  const hauteurBloc=b=>b.boucle?haut(b)+Math.max(24,hauteurListe(b.corps))+(b.sinon?32+Math.max(24,hauteurListe(b.sinon)):0)+BAS:(b.chapeau?H+18:H);
+  const largeurListe=(L,x)=>L.reduce((m,b)=>Math.max(m,x+larg(b),b.boucle?Math.max(largeurListe(b.corps,x+BRAS),b.sinon?largeurListe(b.sinon,x+BRAS):0):0),0);
+  const W=Math.ceil(Math.max(520,largeurListe(blocs,MARGE)+40)), Ht=Math.ceil(hauteurListe(blocs)+130);
+  const s=2; cv.width=W*s; cv.height=Ht*s; c.scale(s,s);
+  c.fillStyle='#F9F9F9'; c.fillRect(0,0,W,Ht);
+  c.fillStyle='#CBD5E1'; for(let x=10;x<W;x+=20) for(let y=10;y<Ht;y+=20) c.fillRect(x,y,1.5,1.5);
+  c.fillStyle='#1E293B'; c.font='bold 17px "Segoe UI",Arial,sans-serif'; c.textBaseline='middle'; c.fillText(titre,16,22);
+  let num=0;
+  /* formes */
+  const encoche=(x,y,bas)=>{ const d=bas?6:6; c.lineTo(x+NOTCH,y); c.lineTo(x+NOTCH+6,y+d); c.lineTo(x+NOTCH+18,y+d); c.lineTo(x+NOTCH+24,y); };
+  const formePile=(x,y,w,h,col,chapeau)=>{ c.beginPath();
+    if(chapeau){ c.moveTo(x,y+18); c.bezierCurveTo(x+20,y-8,x+90,y-8,x+110,y+18); c.lineTo(x+w-4,y+18); c.quadraticCurveTo(x+w,y+18,x+w,y+22); y+=18; }
+    else { c.moveTo(x+4,y); encoche(x,y); c.lineTo(x+w-4,y); c.quadraticCurveTo(x+w,y,x+w,y+4); }
+    c.lineTo(x+w,y+h-4); c.quadraticCurveTo(x+w,y+h,x+w-4,y+h); c.lineTo(x+NOTCH+24,y+h); c.lineTo(x+NOTCH+18,y+h+6); c.lineTo(x+NOTCH+6,y+h+6); c.lineTo(x+NOTCH,y+h); c.lineTo(x+4,y+h); c.quadraticCurveTo(x,y+h,x,y+h-4);
+    if(!chapeau){ c.lineTo(x,y+4); c.quadraticCurveTo(x,y,x+4,y); } c.closePath(); c.fillStyle=col[0]; c.fill(); c.strokeStyle=col[1]; c.lineWidth=1; c.stroke(); };
+  const pill=(x,y,w,h,fond,bord)=>{ c.beginPath(); c.moveTo(x+h/2,y); c.lineTo(x+w-h/2,y); c.arc(x+w-h/2,y+h/2,h/2,-Math.PI/2,Math.PI/2); c.lineTo(x+h/2,y+h); c.arc(x+h/2,y+h/2,h/2,Math.PI/2,-Math.PI/2); c.closePath(); c.fillStyle=fond; c.fill(); if(bord){ c.strokeStyle=bord; c.lineWidth=1; c.stroke(); } };
+  const hexa=(x,y,w,h,fond,bord)=>{ c.beginPath(); c.moveTo(x+h/2,y); c.lineTo(x+w-h/2,y); c.lineTo(x+w,y+h/2); c.lineTo(x+w-h/2,y+h); c.lineTo(x+h/2,y+h); c.lineTo(x,y+h/2); c.closePath(); c.fillStyle=fond; c.fill(); c.strokeStyle=bord; c.lineWidth=1; c.stroke(); };
+  const texte=(s,x,y,col)=>{ c.font=F; c.fillStyle=col||'#fff'; c.textBaseline='middle'; c.fillText(s,x,y); };
+  /* dessin d'un jeton, retourne la largeur */
+  const tok=(t,x,cy,col)=>{ const w=mesTok(t);
+    if(typeof t==='string'){ texte(t,x,cy); }
+    else if(t.t==='num'){ pill(x,cy-13,w,26,'#fff',col[1]); texte(t.v,x+(w-tw(t.v))/2,cy,'#575E75'); }
+    else if(t.t==='dd'){ pill(x,cy-13,w,26,col[1]); texte(t.v,x+12,cy); texte('▾',x+w-18,cy); }
+    else if(t.t==='col'){ pill(x,cy-14,w,28,'#fff',col[1]); c.beginPath(); c.arc(x+w/2,cy,10,0,7); c.fillStyle=t.v; c.fill(); c.strokeStyle='#94A3B8'; c.stroke(); }
+    else if(t.t==='rep'){ const d=MB_COUL.de; pill(x,cy-14,w,28,d[0],d[1]); texte(t.l,x+12,cy); const dx=x+18+tw(t.l); pill(dx,cy-11,tw(t.dd)+28,22,d[1]); texte(t.dd,dx+9,cy); texte('▾',dx+tw(t.dd)+12,cy); }
+    else if(t.t==='bool'){ const o=t.ko?MB_COUL.ko:MB_COUL.op; hexa(x,cy-18,w,36,o[0],o[1]); let px=x+14; t.parts.forEach(p=>{ px+=tok(p,px,cy,o)+8; }); }
+    return w; };
+  const ligne=(b,x,y,h)=>{ const col=MB_COUL[b.c]; let px=x+12; b.k.forEach(t=>{ px+=tok(t,px,y+h/2,col)+8; }); };
+  const numero=(y)=>{ num++; c.beginPath(); c.arc(20,y,12,0,7); c.fillStyle='#334155'; c.fill(); texte(String(num),num>9?12:16,y,'#fff'); };
+  const marque=(b,x,y,h)=>{ if(b.approx||b.k.some(t=>t&&(t.approx||(t.parts&&t.parts.some(p=>p.approx))))){ c.font='bold 13px sans-serif'; c.fillStyle='#B45309'; c.fillText('≈',x+larg(b)+6,y+h/2); } };
+  const dessinerListe=(L,x,y)=>{ L.forEach(b=>{
+    const col=MB_COUL[b.c], h=haut(b);
+    if(b.chapeau){ formePile(x,y,larg(b),H,col,true); numero(y+18+H/2); ligne(b,x,y+18,H); marque(b,x,y+18,H); y+=H+18; return; }
+    if(!b.boucle){ formePile(x,y,larg(b),h,col); numero(y+h/2); ligne(b,x,y,h); marque(b,x,y,h); y+=h; return; }
+    const hc=Math.max(24,hauteurListe(b.corps)), hs=b.sinon?Math.max(24,hauteurListe(b.sinon)):0, wb=Math.max(larg(b),150);
+    c.fillStyle=col[0]; c.strokeStyle=col[1];
+    formePile(x,y,larg(b),h,col); numero(y+h/2); ligne(b,x,y,h); marque(b,x,y,h);
+    c.fillStyle=col[0]; c.fillRect(x,y+h-1,BRAS,hc+2+(b.sinon?32+hs:0)+BAS-6);
+    dessinerListe(b.corps,x+BRAS,y+h);
+    let yy=y+h+hc;
+    if(b.sinon){ formePile(x,yy,wb,32,col); c.fillStyle=col[0]; c.fillRect(x+1,yy-2,BRAS-1,6); texte('sinon',x+12,yy+16); dessinerListe(b.sinon,x+BRAS,yy+32); yy+=32+hs; }
+    formePile(x,yy,wb,BAS-6,col); c.fillStyle=col[0]; c.fillRect(x+1,yy-2,BRAS-1,6);
+    if(b.k[0]==='répéter indéfiniment'||b.k[0]==='répéter'){ texte('↻',x+wb-24,yy+(BAS-6)/2); }
+    y=yy+BAS; });
+    return y; };
+  dessinerListe(blocs,MARGE,46);
+  c.font='13px "Segoe UI",Arial,sans-serif'; c.fillStyle='#475569';
+  c.fillText('Numéros = ordre des blocs à poser. ≈ : libellé proche, vérifie-le dans ta version de mBlock 5.',16,Ht-40);
+  c.fillText('Généré par mBot Mission — à recopier dans mBlock 5 (appareil mBot, mode Téléverser).',16,Ht-20);
+  return cv;
+}
+function mbImage(prog,titre){ return mbDessiner(mbArbre(prog,REG),titre); }
+
 function traduire(prog){
   stat('traduits'); trophee('traducteur');
   const c=compiler(prog); if(c.err.length){ info('⚠ '+c.err[0].msg+'<br>Corrige ton programme avant de le traduire.'); return; }
   if(REG.court===null) REG.court=prog.some(b=>b.t==='jusqua');
   const T=traductions(prog,REG), esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
   modale('<h2 style="margin-top:0">🤖 Pour le vrai mBot</h2>'
-   +'<div class="reglages"><label>1 case = <input id="rC" type="number" step="0.05" value="'+REG.sCase+'"> s</label><label>¼ de tour = <input id="rQ" type="number" step="0.05" value="'+REG.sQuart+'"> s</label><label>Puissance <input id="rP" type="number" step="5" min="20" max="100" value="'+REG.puiss+'"> %</label><label>Obstacle &lt; <input id="rD" type="number" value="'+REG.dist+'"> cm</label><label>Seuil lumière <input id="rS" type="number" value="'+REG.seuil+'"></label><label><input id="rCo" type="checkbox" '+(REG.court?'checked':'')+'> mouvements courts dans la boucle infinie</label><button class="btn p" id="rOk">Recalculer</button></div>'
+   +'<div class="reglages"><label>1 case = <input id="rC" type="number" step="0.05" value="'+REG.sCase+'"> s</label><label>¼ de tour = <input id="rQ" type="number" step="0.05" value="'+REG.sQuart+'"> s</label><label>Puissance <input id="rP" type="number" step="5" min="20" max="100" value="'+REG.puiss+'"> %</label><label>Obstacle &lt; <input id="rD" type="number" value="'+REG.dist+'"> cm</label><label>Seuil lumière <input id="rS" type="number" value="'+REG.seuil+'"></label><label>Départ <select id="rDe"><option value="demarre"'+(REG.depart!=='bouton'?' selected':'')+'>Lorsque le mBot démarre</option><option value="bouton"'+(REG.depart==='bouton'?' selected':'')+'>Bouton embarqué appuyé</option></select></label><label><input id="rCo" type="checkbox" '+(REG.court?'checked':'')+'> mouvements courts dans la boucle infinie</label><button class="btn p" id="rOk">Recalculer</button></div>'
    +'<div class="bascule" style="margin:10px 0"><button id="tB" class="on">🧩 Blocs mBlock 5</button><button id="tA">⌨ Code Arduino</button><button id="tP">🌉 Faire le pont</button></div>'
-   +'<div id="zB"><pre id="pB">'+esc(T.blocs)+'</pre><button class="btn" id="cB">📋 Copier</button></div>'
+   +'<div id="zB"><p style="margin:0 0 6px">Recopie ces blocs <b>dans l\'ordre des numéros</b> dans mBlock 5. Les blocs décalés vont <b>dans</b> la boucle ou le « si ».</p><div id="imgBlocs" style="overflow:auto;max-height:52vh;border:1px solid #e2e8f0;border-radius:10px"></div>'
+   +'<div class="barre"><button class="btn p" id="dlB">💾 Télécharger l\'image</button><button class="btn" id="cpB">📋 Copier l\'image</button><button class="btn" id="prB">🖨️ Imprimer</button><span class="aide" id="aideB"></span></div>'
+   +'<details style="margin-top:6px"><summary>Version texte</summary><pre id="pB">'+esc(T.blocs)+'</pre><button class="btn" id="cB">📋 Copier le texte</button></details></div>'
    +'<div id="zA" style="display:none"><pre id="pA">'+esc(T.ino)+'</pre><button class="btn" id="cA">📋 Copier le code</button></div>'
    +'<div id="zP" style="display:none"><ol style="line-height:1.5">'
      +'<li><b>mBlock 5</b> → Appareils → Ajouter → <b>mBot</b>. Connecter en USB, mode <b>Téléverser</b>.</li>'
@@ -1116,7 +1214,13 @@ function traduire(prog){
   $('#tB').onclick=()=>onglet('B'); $('#tA').onclick=()=>onglet('A'); $('#tP').onclick=()=>onglet('P');
   const copier=(id,btn)=>{ try{ navigator.clipboard.writeText($(id).textContent).then(()=>{ btn.textContent='✅ Copié'; },()=>{ btn.textContent='Copie refusée : sélectionne le texte'; }); }catch(e){ btn.textContent='Sélectionne le texte et fais Ctrl+C'; } };
   $('#cB').onclick=e=>copier('#pB',e.target); $('#cA').onclick=e=>copier('#pA',e.target);
-  $('#rOk').onclick=()=>{ REG={sCase:parseFloat($('#rC').value)||0.7,sQuart:parseFloat($('#rQ').value)||0.6,puiss:Math.max(20,Math.min(100,parseInt($('#rP').value)||50)),dist:parseInt($('#rD').value)||10,seuil:parseInt($('#rS').value)||300,court:$('#rCo').checked}; store('mbotReglages',JSON.stringify(REG)); traduire(prog); };
+  const titreImg='Programme mBlock 5 — '+(J.def?(J.def.custom?'Mon circuit':(J.idx+1)+'. '+J.def.titre):'mBot Mission')+(joueur.prenom?' — '+joueur.prenom+(joueur.classe?' ('+joueur.classe+')':''):'');
+  const cvB=mbImage(prog,titreImg); cvB.style.width=(cvB.width/2)+'px'; cvB.style.maxWidth='none'; cvB.style.display='block'; $('#imgBlocs').appendChild(cvB);
+  const nomImg='mBot_'+(J.def&&!J.def.custom?'niveau'+(J.idx+1):'programme')+'.png';
+  $('#dlB').onclick=()=>{ try{ const a=document.createElement('a'); a.href=cvB.toDataURL('image/png'); a.download=nomImg; document.body.appendChild(a); a.click(); a.remove(); $('#aideB').textContent='Image enregistrée dans Téléchargements : '+nomImg; }catch(e){ $('#aideB').textContent='Téléchargement impossible ici : utilise « Copier l\'image ».'; } };
+  $('#cpB').onclick=()=>{ try{ cvB.toBlob(b=>{ navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>{ $('#aideB').textContent='Image copiée : colle-la (Ctrl+V) dans un document.'; },()=>{ $('#aideB').textContent='Copie refusée par le navigateur : utilise Télécharger.'; }); }); }catch(e){ $('#aideB').textContent='Copie impossible ici : utilise Télécharger.'; } };
+  $('#prB').onclick=()=>{ try{ const w=window.open('','_blank'); w.document.write('<!DOCTYPE html><title>'+esc(titreImg)+'</title><style>@page{size:A4;margin:12mm}body{margin:0;font-family:sans-serif}img{max-width:100%}</style><img src="'+cvB.toDataURL('image/png')+'" onload="setTimeout(()=>print(),200)">'); w.document.close(); }catch(e){ $('#aideB').textContent='Impression impossible ici : utilise Télécharger.'; } };
+  $('#rOk').onclick=()=>{ REG={sCase:parseFloat($('#rC').value)||0.7,sQuart:parseFloat($('#rQ').value)||0.6,puiss:Math.max(20,Math.min(100,parseInt($('#rP').value)||50)),dist:parseInt($('#rD').value)||10,seuil:parseInt($('#rS').value)||300,court:$('#rCo').checked,depart:$('#rDe').value}; store('mbotReglages',JSON.stringify(REG)); traduire(prog); };
 }
 
 /* =========================================================
