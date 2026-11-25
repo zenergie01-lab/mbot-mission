@@ -555,10 +555,10 @@ function simuler(def,variante,prog){
    ========================================================= */
 function dessiner(cv,M,robots,opts){
   opts=opts||{};
-  const box=cv.parentElement.getBoundingClientRect();
+  const box=cv.parentElement?cv.parentElement.getBoundingClientRect():{width:900};
   const maxW=Math.max(260,box.width-4), maxH=Math.max(220,window.innerHeight*(opts.h||0.52));
-  const cs=Math.floor(Math.min(maxW/M.W,maxH/M.H,72));
-  const dpr=window.devicePixelRatio||1, Wp=cs*M.W, Hp=cs*M.H;
+  const cs=opts.cs||Math.floor(Math.min(maxW/M.W,maxH/M.H,72));
+  const dpr=opts.dpr||window.devicePixelRatio||1, Wp=cs*M.W, Hp=cs*M.H;
   if(cv.width!==Wp*dpr||cv.height!==Hp*dpr){ cv.width=Wp*dpr; cv.height=Hp*dpr; cv.style.width=Wp+'px'; cv.style.height=Hp+'px'; }
   const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); cv._cs=cs;
   const tick=opts.tick!==undefined?opts.tick:(robots[0]?robots[0].ticks:0);
@@ -1188,6 +1188,33 @@ function mbDessiner(blocs,titre){
 }
 function mbImage(prog,titre){ return mbDessiner(mbArbre(prog,REG),titre); }
 
+
+/* image complète : circuit(s) au-dessus des blocs, pour le téléchargement et l'impression */
+function mbCircuit(def,v,cs){
+  const M=construireMonde(def,v), R=nouveauRobot(M,M.start.x,M.start.y,M.start.d); R.skin=joueur.equip;
+  const cv=document.createElement('canvas'); dessiner(cv,M,[R],{cs,dpr:2,tick:0}); return cv;
+}
+function mbExport(prog,titre){
+  const blocs=mbImage(prog,titre), def=J.def; if(!def) return blocs;
+  const n=def.variantes.length, cs=n>1?30:46, circs=[];
+  for(let v=0;v<n;v++) circs.push(mbCircuit(def,v,cs));
+  const gap=48, cw=circs.reduce((a,c)=>a+c.width,0)+gap*(n-1), ch=Math.max(...circs.map(c=>c.height));
+  const head=n>1?150:120, pied=n>1?150:90, W=Math.max(blocs.width,cw+96), H=head+ch+pied+blocs.height;
+  const out=document.createElement('canvas'); out.width=W; out.height=H; const c=out.getContext('2d');
+  c.fillStyle='#fff'; c.fillRect(0,0,W,H); c.textBaseline='middle';
+  c.fillStyle='#1E293B'; c.font='bold 36px "Segoe UI",Arial,sans-serif';
+  c.fillText('Le circuit — '+(def.custom?'Mon circuit':(J.idx+1)+'. '+def.titre),32,46);
+  c.font='26px "Segoe UI",Arial,sans-serif'; c.fillStyle='#334155'; c.fillText(def.consigne||'',32,96);
+  if(n>1){ c.fillStyle='#B45309'; c.font='bold 24px "Segoe UI",Arial,sans-serif'; c.fillText('Le circuit change à chaque essai : ton programme doit réussir sur les '+n+' circuits.',32,132); }
+  let x=(W-cw)/2;
+  circs.forEach((cv,i)=>{ c.drawImage(cv,x,head); if(n>1){ c.fillStyle='#475569'; c.font='bold 24px "Segoe UI",Arial,sans-serif'; const t='Circuit '+(i+1); c.fillText(t,x+(cv.width-c.measureText(t).width)/2,head+ch+28); } x+=cv.width+gap; });
+  c.fillStyle='#64748B'; c.font='20px "Segoe UI",Arial,sans-serif';
+  c.fillText('Légende : drapeau = arrivée · barrière = LED de la même couleur · ↔ passage étroit · pile verte à ramasser · colis BIP · tunnel sombre · feu',32,head+ch+(n>1?72:36));
+  c.strokeStyle='#CBD5E1'; c.lineWidth=2; c.beginPath(); c.moveTo(32,head+ch+pied-20); c.lineTo(W-32,head+ch+pied-20); c.stroke();
+  c.drawImage(blocs,0,head+ch+pied);
+  return out;
+}
+
 function traduire(prog){
   stat('traduits'); trophee('traducteur');
   const c=compiler(prog); if(c.err.length){ info('⚠ '+c.err[0].msg+'<br>Corrige ton programme avant de le traduire.'); return; }
@@ -1217,9 +1244,10 @@ function traduire(prog){
   const titreImg='Programme mBlock 5 — '+(J.def?(J.def.custom?'Mon circuit':(J.idx+1)+'. '+J.def.titre):'mBot Mission')+(joueur.prenom?' — '+joueur.prenom+(joueur.classe?' ('+joueur.classe+')':''):'');
   const cvB=mbImage(prog,titreImg); cvB.style.width=(cvB.width/2)+'px'; cvB.style.maxWidth='none'; cvB.style.display='block'; $('#imgBlocs').appendChild(cvB);
   const nomImg='mBot_'+(J.def&&!J.def.custom?'niveau'+(J.idx+1):'programme')+'.png';
-  $('#dlB').onclick=()=>{ try{ const a=document.createElement('a'); a.href=cvB.toDataURL('image/png'); a.download=nomImg; document.body.appendChild(a); a.click(); a.remove(); $('#aideB').textContent='Image enregistrée dans Téléchargements : '+nomImg; }catch(e){ $('#aideB').textContent='Téléchargement impossible ici : utilise « Copier l\'image ».'; } };
-  $('#cpB').onclick=()=>{ try{ cvB.toBlob(b=>{ navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>{ $('#aideB').textContent='Image copiée : colle-la (Ctrl+V) dans un document.'; },()=>{ $('#aideB').textContent='Copie refusée par le navigateur : utilise Télécharger.'; }); }); }catch(e){ $('#aideB').textContent='Copie impossible ici : utilise Télécharger.'; } };
-  $('#prB').onclick=()=>{ try{ const w=window.open('','_blank'); w.document.write('<!DOCTYPE html><title>'+esc(titreImg)+'</title><style>@page{size:A4;margin:12mm}body{margin:0;font-family:sans-serif}img{max-width:100%}</style><img src="'+cvB.toDataURL('image/png')+'" onload="setTimeout(()=>print(),200)">'); w.document.close(); }catch(e){ $('#aideB').textContent='Impression impossible ici : utilise Télécharger.'; } };
+  let cvX=null; const complet=()=>cvX||(cvX=mbExport(prog,titreImg));
+  $('#dlB').onclick=()=>{ try{ const a=document.createElement('a'); a.href=complet().toDataURL('image/png'); a.download=nomImg; document.body.appendChild(a); a.click(); a.remove(); $('#aideB').textContent='Image enregistrée dans Téléchargements : '+nomImg; }catch(e){ $('#aideB').textContent='Téléchargement impossible ici : utilise « Copier l\'image ».'; } };
+  $('#cpB').onclick=()=>{ try{ complet().toBlob(b=>{ navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>{ $('#aideB').textContent='Image copiée : colle-la (Ctrl+V) dans un document.'; },()=>{ $('#aideB').textContent='Copie refusée par le navigateur : utilise Télécharger.'; }); }); }catch(e){ $('#aideB').textContent='Copie impossible ici : utilise Télécharger.'; } };
+  $('#prB').onclick=()=>{ try{ const w=window.open('','_blank'); w.document.write('<!DOCTYPE html><title>'+esc(titreImg)+'</title><style>@page{size:A4;margin:12mm}body{margin:0;font-family:sans-serif}img{max-width:100%}</style><img src="'+complet().toDataURL('image/png')+'" onload="setTimeout(()=>print(),200)">'); w.document.close(); }catch(e){ $('#aideB').textContent='Impression impossible ici : utilise Télécharger.'; } };
   $('#rOk').onclick=()=>{ REG={sCase:parseFloat($('#rC').value)||0.7,sQuart:parseFloat($('#rQ').value)||0.6,puiss:Math.max(20,Math.min(100,parseInt($('#rP').value)||50)),dist:parseInt($('#rD').value)||10,seuil:parseInt($('#rS').value)||300,court:$('#rCo').checked,depart:$('#rDe').value}; store('mbotReglages',JSON.stringify(REG)); traduire(prog); };
 }
 
