@@ -1,6 +1,6 @@
 // Relais vers le classement Supabase (évite le blocage CORS et garde la clé côté serveur).
 // Seules les 3 fonctions du jeu sont autorisées.
-const AUTORISEES = new Set(['mbot_envoyer', 'mbot_classement', 'mbot_etablissement']);
+const AUTORISEES = new Set(['mbot_envoyer', 'mbot_classement', 'mbot_etablissement', 'mbot_ligue_colleges', 'mbot_ligue_classes']);
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');

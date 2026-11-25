@@ -53,6 +53,11 @@ canvas{display:block;border-radius:10px;background:#cbd5e1;max-width:100%}
 .bascule button.on{background:#4f46e5;color:#fff}
 .msg{min-height:30px;margin-top:8px;padding:8px 14px;border-radius:10px;font-size:17px;font-weight:600;background:var(--fond)}
 .analogie{font-size:15px}
+
+.chrono{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;background:#0f172a;color:#facc15;border-radius:10px;padding:3px 12px;white-space:nowrap}
+.chrono small{color:#cbd5e1;font-size:13px;font-weight:600}
+.chrono.pause{opacity:.75}
+.ligue td.nom{font-weight:700}
 #ctrlProg{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:8px;margin:10px 0 4px}
 #ctrlProg .btn{font-size:18px;padding:12px 10px;font-weight:800}
 .invite input{font:inherit;font-size:17px;padding:8px 10px;border:2px solid #cbd5e1;border-radius:10px;width:100%}
@@ -147,7 +152,7 @@ table.clt .num{text-align:right;white-space:nowrap}table.clt tr.moi td{backgroun
   <label for="iPrenom">Prénom + initiale du nom</label><input id="iPrenom" autocomplete="off" maxlength="20" placeholder="ex. Léa M.">
   <label for="iClasse">Classe</label><input id="iClasse" autocomplete="off" maxlength="12" placeholder="ex. 3_GOYA">
   <label for="iEtab">Établissement</label><input id="iEtab" autocomplete="off" maxlength="40" placeholder="ex. Collège de Kourou">
-  <label for="iCode">Code de classe <small style="font-weight:400">(donné par ton prof, pour le classement en ligne — facultatif)</small></label><input id="iCode" autocomplete="off" maxlength="30">
+  <label for="iCode">Code du collège <small style="font-weight:400">(donné par ton prof, pour le classement en ligne — facultatif)</small></label><input id="iCode" autocomplete="off" maxlength="30">
   <p style="margin-top:16px"><button class="gros" id="bEntrer">C'est parti !</button></p>
   <div class="modes">
     <div><b>🎮 Télécommande</b>Tu pilotes avec les flèches du clavier. Pour découvrir le circuit.</div>
@@ -163,7 +168,7 @@ table.clt .num{text-align:right;white-space:nowrap}table.clt tr.moi td{backgroun
 <!-- JEU -->
 <section class="ecran" id="e-jeu"><div class="jeu">
   <div class="panneau">
-    <div class="titreN"><span class="pastille" id="nCeinture"></span><h2 id="nTitre"></h2><button class="btn" id="bVariante" title="Voir un autre circuit possible">🔀 Autre circuit</button><button class="btn" id="bRetour">← Niveaux</button></div>
+    <div class="titreN"><span class="pastille" id="nCeinture"></span><h2 id="nTitre"></h2><span class="chrono" id="chrono" title="Temps passé sur ce circuit en mode programme"></span><button class="btn" id="bChrono" title="Effacer le programme et relancer le chrono">⏱ Nouvel essai chrono</button><button class="btn" id="bVariante" title="Voir un autre circuit possible">🔀 Autre circuit</button><button class="btn" id="bRetour">← Niveaux</button></div>
     <div class="consigne" id="nConsigne"></div>
     <div class="analogie" id="nAnalogie"></div>
     <div class="taches" id="nTaches"></div>
@@ -233,7 +238,7 @@ table.clt .num{text-align:right;white-space:nowrap}table.clt tr.moi td{backgroun
 <!-- CLASSEMENT -->
 <section class="ecran" id="e-classement"><div class="panneau" style="max-width:1100px;margin:0 auto">
   <h2 style="margin:0 0 8px">📊 Classement</h2>
-  <div class="bascule" id="cltOnglets"><button data-o="classe">Ma classe</button><button data-o="etab">Mon établissement</button><button data-o="poste">Ce poste</button></div>
+  <div class="bascule" id="cltOnglets" style="flex-wrap:wrap"><button data-o="classe">👥 Ma classe</button><button data-o="etab">🏫 Mon collège</button><button data-o="chrono">⏱ Chrono</button><button data-o="classes">🏅 Classes</button><button data-o="colleges">🏆 Collèges</button><button data-o="poste">💻 Ce poste</button></div>
   <div id="cltContenu" style="margin-top:10px"></div>
   <p class="aide">Le classement compte l'XP : étoiles, niveaux réussis, trophées, défis. Pour gagner des places, raccourcis tes programmes !</p>
 </div></section>
@@ -705,13 +710,13 @@ function majEntete(){
    NAVIGATION
    ========================================================= */
 let ecranCourant='accueil';
-function montrer(e){ ecranCourant=e; document.querySelectorAll('.ecran').forEach(s=>s.classList.toggle('on',s.id==='e-'+e)); document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.e===e||(e==='jeu'&&b.dataset.e==='niveaux'))); if(e==='niveaux') afficherCarte(); if(e==='duel') duelInit(); if(e==='atelier') atelierInit(); if(e==='garage') afficherGarage(); if(e==='trophees') afficherTrophees(); if(e==='classement') afficherClassement(); arreter(); }
+function montrer(e){ if(e!=='jeu'&&typeof chronoPause==='function') chronoPause(); ecranCourant=e; document.querySelectorAll('.ecran').forEach(s=>s.classList.toggle('on',s.id==='e-'+e)); document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.e===e||(e==='jeu'&&b.dataset.e==='niveaux'))); if(e==='niveaux') afficherCarte(); if(e==='duel') duelInit(); if(e==='atelier') atelierInit(); if(e==='garage') afficherGarage(); if(e==='trophees') afficherTrophees(); if(e==='classement') afficherClassement(); arreter(); }
 document.querySelectorAll('#cltOnglets button').forEach(b=>b.onclick=()=>{ ongletClt=b.dataset.o; afficherClassement(); });
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ if(!joueur.prenom&&b.dataset.e!=='aide'){ montrer('accueil'); return; } montrer(b.dataset.e); });
 function entrer(){ const p=$('#iPrenom').value.trim().replace(/\s+/g,' '); if(!p){ $('#iPrenom').focus(); return; }
   joueur.prenom=p; joueur.classe=$('#iClasse').value.trim().toUpperCase(); joueur.etab=$('#iEtab').value.trim(); joueur.code=$('#iCode').value.trim().toUpperCase();
   store('mbotDernier',JSON.stringify({prenom:joueur.prenom,classe:joueur.classe,etab:joueur.etab,code:joueur.code}));
-  charger(); appliquerInvite(); sauver(); majEntete(); montrer('niveaux'); toast('Bienvenue '+esc(p)+' ! Niveau '+niveauDe(joueur.xp)+' · '+titreDe(niveauDe(joueur.xp)),'xp'); synchroMaintenant(); }
+  charger(); appliquerInvite(); sauver(); majEntete(); montrer('niveaux'); verifierCode(); toast('Bienvenue '+esc(p)+' ! Niveau '+niveauDe(joueur.xp)+' · '+titreDe(niveauDe(joueur.xp)),'xp'); synchroMaintenant(); }
 $('#bEntrer').onclick=entrer;
 try{ const d=JSON.parse(store('mbotDernier')||'null'); if(d){ $('#iPrenom').value=d.prenom||''; $('#iClasse').value=d.classe||''; $('#iEtab').value=d.etab||''; $('#iCode').value=d.code||''; } }catch(e){}
 $('#iEtab').onkeydown=e=>{ if(e.key==='Enter') $('#iCode').focus(); };
@@ -732,7 +737,7 @@ function afficherCarte(){
     d.innerHTML='<h3>'+ce.nom+(ceintureObtenue(k)?' ✅':'')+' <small>'+ce.sous+'</small></h3>';
     const T=document.createElement('div'); T.className='tuiles';
     NIVEAUX.forEach((n,i)=>{ if(n.ce!==k) return; const ok=debloque(i), e=joueur.etoiles[n.id]||0, b=document.createElement('button');
-      b.className='tuile'+(ok?'':' lock'); b.innerHTML='<b>'+(i+1)+'. '+n.titre+'</b><span>'+(n.variantes.length>1?'🔀 '+n.variantes.length+' circuits':'1 circuit')+(joueur.tele[n.id]?' · 🎮 ✓':'')+'</span><div class="et">'+'★'.repeat(e)+'<span style="color:#cbd5e1">'+'★'.repeat(3-e)+'</span></div>';
+      b.className='tuile'+(ok?'':' lock'); b.innerHTML='<b>'+(i+1)+'. '+n.titre+'</b><span>'+(n.variantes.length>1?'🔀 '+n.variantes.length+' circuits':'1 circuit')+(joueur.tele[n.id]?' · 🎮 ✓':'')+((joueur.temps||{})[n.id]?' · ⏱ '+fmtTemps(joueur.temps[n.id]):'')+'</span><div class="et">'+'★'.repeat(e)+'<span style="color:#cbd5e1">'+'★'.repeat(3-e)+'</span></div>';
       b.onclick=()=>{ if(ok) ouvrirNiveau(i); }; T.appendChild(b); });
     d.appendChild(T); C.appendChild(d);
   });
@@ -763,7 +768,7 @@ function ouvrirNiveau(i,custom){
   edJeu.config({blocs:J.def.blocs,conds:J.def.conds||[],par:J.def.par});
   let p=null; try{ p=JSON.parse(store('mbotProg_'+cleJoueur()+'_'+J.def.id)||'null'); }catch(e){}
   edJeu.prog=[]; if(p&&p.length) edJeu.charger(p); else edJeu.render();
-  montrer('jeu'); reinit(); choisirMode(J.mode); setMsg('Prêt ! '+(J.mode==='prog'?'Écris ton programme puis clique sur ▶ Lancer.':'Pilote avec les flèches du clavier.'),'info');
+  chronoReset(); montrer('jeu'); reinit(); choisirMode(J.mode); setMsg('Prêt ! '+(J.mode==='prog'?'Écris ton programme puis clique sur ▶ Lancer.':'Pilote avec les flèches du clavier.'),'info');
 }
 $('#bRetour').onclick=()=>montrer('niveaux');
 $('#bVariante').onclick=()=>{ J.var=(J.var+1)%J.def.variantes.length; J.vues.add(J.var); if(J.vues.size>=J.def.variantes.length) trophee('explorateur'); reinit(); setMsg('Circuit '+(J.var+1)+' sur '+J.def.variantes.length+'.','info'); };
@@ -779,7 +784,7 @@ function majTaches(){
 function setMsg(t,cls){ const m=$('#msg'); m.textContent=t; m.className='msg '+(cls||''); }
 function duree(){ return [0,650,420,260,140,60][+$('#vitesse').value]; }
 function choisirMode(m){
-  J.mode=m; $('#mTele').classList.toggle('on',m==='tele'); $('#mProg').classList.toggle('on',m==='prog');
+  J.mode=m; if(m==='prog') chronoStart(); else chronoPause(); $('#bChrono').style.display=m==='prog'?'':'none'; $('#mTele').classList.toggle('on',m==='tele'); $('#mProg').classList.toggle('on',m==='prog');
   CTRL_EL.style.display=m==='prog'?'grid':'none'; $('#touches').style.display=m==='tele'?'':'none'; if(m==='tele'&&document.activeElement) document.activeElement.blur();
   reinit(); setMsg(m==='tele'?'Mode télécommande : pilote avec le clavier. Tes gestes sont notés.':'Mode programme : écris toute la recette, puis ▶ Lancer.','info');
 }
@@ -826,13 +831,17 @@ function victoire(){
   if(n>1){ tous=0; for(let v=0;v<n;v++){ if(simuler(def,v,edJeu.prog.map(({id,...b})=>b)).ok) tous++; } }
   if(n>1 && tous<n){ setMsg('✅ Réussi sur ce circuit… mais ton programme ne marche que sur '+tous+' circuit(s) sur '+n+'. Il doit marcher partout : utilise les capteurs !','ko'); return; }
   const et=def.custom?3:etoiles(nb,def.par), avant=joueur.etoiles[def.id]||0;
+  chronoPause(); CH.fini=true; const secs=Math.max(3,Math.round(chronoMs()/1000)); let record=false, ancien=(joueur.temps||{})[def.id];
+  if(!def.custom&&CH.valide){ joueur.temps=joueur.temps||{}; if(!ancien||secs<ancien){ record=true; joueur.temps[def.id]=secs; } if(!joueur.prenom) INV.temps=Math.min(INV.temps||99999,secs); }
+  const ligneTemps='<p style="text-align:center;font-size:20px">⏱ Ton temps : <b>'+fmtTemps(secs)+'</b>'+(!CH.valide?' <small>(non classé : ton programme était déjà écrit — clique « Nouvel essai chrono »)</small>':record?(ancien?' 🔥 <b>Nouveau record !</b> (avant : '+fmtTemps(ancien)+')':' 🔥 Premier record !'):' · record : '+fmtTemps(ancien))+'</p>';
   if(!def.custom){ joueur.etoiles[def.id]=Math.max(avant,et); sauver(); }
   if(!joueur.prenom&&!def.custom){ INV.prog=true; INV.et=Math.max(INV.et,et); setMsg('🏆 Programme réussi : le robot est allé seul au drapeau !','ok'); suiteInvite(); return; }
   recompenserVictoire(def,nb,et,avant);
+  if(record&&ancien&&!def.custom) gagner(10,5,'⏱ Nouveau record de temps');
   setMsg('🏆 Mission réussie !'+(n>1?' Ton programme marche sur les '+n+' circuits : c\'est un vrai algorithme.':''),'ok');
   const suivant=J.idx+1<NIVEAUX.length&&!def.custom;
   modale('<div class="victoire">🏆 Mission réussie !</div><div class="etoiles">'+'★'.repeat(et)+'<span style="color:#e2e8f0">'+'★'.repeat(3-et)+'</span></div>'
-   +'<p style="text-align:center">Ton programme : <b>'+nb+' blocs</b>'+(def.par?' · objectif ⭐⭐⭐ : '+def.par+' blocs':'')+'</p>'
+   +ligneTemps+'<p style="text-align:center">Ton programme : <b>'+nb+' blocs</b>'+(def.par?' · objectif ⭐⭐⭐ : '+def.par+' blocs':'')+'</p>'
    +(et<3&&def.par?'<p style="text-align:center">💡 Peux-tu faire plus court ? '+(def.ce>=2?'Une boucle peut remplacer des blocs qui se répètent.':'Un bloc « Avancer de 3 » remplace trois blocs « Avancer de 1 ».')+'</p>':'')
    +(ceintureObtenue(def.ce)&&!def.custom?'<p style="text-align:center;font-size:20px">🥋 '+CEINTURES[def.ce].nom+' obtenue !</p>':'')
    +'<p style="text-align:center"><button class="btn" onclick="fermerModale()">Rester ici</button> '+(suivant?'<button class="btn p" onclick="fermerModale();ouvrirNiveau('+(J.idx+1)+')">Niveau suivant →</button>':'<button class="btn p" onclick="fermerModale();montrer(\'niveaux\')">Niveaux</button>')+'</p>');
@@ -1289,7 +1298,7 @@ const TROPHEES=[
  {id:'collection',ico:'🎨',nom:'Collectionneur',desc:'Posséder 6 objets du garage.'},
  {id:'niveau5',ico:'🚀',nom:'Niveau 5',desc:'Atteindre le niveau joueur 5.'},{id:'niveau10',ico:'🛰️',nom:'Niveau 10',desc:'Atteindre le niveau joueur 10.'}
 ];
-function profilVide(){ return {etoiles:{},tele:{},xp:0,boulons:0,trophees:{},possede:['bleu','aucun','aucune'],equip:{couleur:'bleu',chapeau:'aucun',trainee:'aucune'},stats:{},defi:''}; }
+function profilVide(){ return {temps:{},etoiles:{},tele:{},xp:0,boulons:0,trophees:{},possede:['bleu','aucun','aucune'],equip:{couleur:'bleu',chapeau:'aucun',trainee:'aucune'},stats:{},defi:''}; }
 function stat(k,n){ joueur.stats[k]=(joueur.stats[k]||0)+(n||1); if(k==='pas'&&joueur.stats.pas>=10) trophee('debogueur'); sauver(); }
 function totalEtoiles(){ return Object.values(joueur.etoiles).reduce((a,b)=>a+b,0); }
 function nbCeintures(){ return CEINTURES.filter((c,k)=>ceintureObtenue(k)).length; }
@@ -1392,11 +1401,20 @@ async function afficherClassement(){
     Z.innerHTML='<p class="aide">Tous les joueurs qui ont joué sur <b>cet ordinateur</b>.</p>'+tableClassement(rows); return;
   }
   if(!enLigne()){ Z.innerHTML='<p class="aide">Le classement en ligne n\'est pas activé sur cette version (jeu hors ligne). Utilise l\'onglet « Ce poste ».</p>'; return; }
-  if(!joueur.code){ Z.innerHTML='<p class="aide">Pour apparaître dans le classement en ligne, entre le <b>code de classe</b> donné par ton professeur (bouton ✏️ à côté de ton prénom).</p>'; return; }
   Z.innerHTML='<p class="aide">Chargement…</p>';
-  try{ await synchroMaintenant(); const rows=await rpc('mbot_classement',{p_code:joueur.code}); let r=Array.isArray(rows)?rows:[];
+  try{
+    if(ongletClt==='colleges'||ongletClt==='classes'){
+      if(joueur.code) await synchroMaintenant();
+      const r=await rpc(ongletClt==='colleges'?'mbot_ligue_colleges':'mbot_ligue_classes',{});
+      Z.innerHTML='<p class="aide">'+(ongletClt==='colleges'?'🏆 <b>Ligue des collèges</b> : la moyenne de points par joueur. Chaque élève fait monter son collège !':'🏅 <b>Ligue des classes</b>, tous collèges confondus : la moyenne de points par joueur.')+' Classement sans prénom, à partir de 3 joueurs.</p>'+tableLigue(Array.isArray(r)?r:[],ongletClt==='classes');
+      return;
+    }
+    if(!joueur.code){ Z.innerHTML='<p class="aide">Pour ce classement, entre le <b>code du collège</b> donné par ton professeur (clique sur ton prénom en haut à droite). Les onglets 🏅 Classes et 🏆 Collèges restent visibles.</p>'; return; }
+    await synchroMaintenant(); const rows=await rpc('mbot_classement',{p_code:joueur.code}); let r=Array.isArray(rows)?rows:[];
+    if(ongletClt==='chrono'){ Z.innerHTML='<p class="aide">⏱ <b>Défi chrono</b> de ton collège : le meilleur temps pour réussir un circuit en mode programme, en partant d\'un programme vide.</p>'+tableChrono(r);
+      const sc=$('#selChrono'); if(sc) sc.onchange=()=>{ niveauChrono=+sc.value; afficherClassement(); }; return; }
     if(ongletClt==='classe') r=r.filter(x=>String(x.classe).toUpperCase()===joueur.classe);
-    Z.innerHTML='<p class="aide">'+(ongletClt==='classe'?'Ta classe : <b>'+esc(joueur.classe)+'</b>':'Tout l\'établissement : <b>'+esc(joueur.etab||'')+'</b>')+' · mis à jour à l\'instant</p>'+tableClassement(r);
+    Z.innerHTML='<p class="aide">'+(ongletClt==='classe'?'Ta classe : <b>'+esc(joueur.classe)+'</b>':'Ton collège : <b>'+esc(joueur.college||joueur.etab||'')+'</b>')+' · mis à jour à l\'instant</p>'+tableClassement(r);
   }catch(e){ Z.innerHTML='<p class="aide">Classement en ligne injoignable pour le moment (pas d\'internet ?). Ta progression est gardée sur ce poste.</p>'; }
 }
 /* ---------- en ligne (Supabase, fonctions RPC) ---------- */
@@ -1412,7 +1430,7 @@ let synchroT=null;
 function etatLigne(t){ const z=$('#hLigne'); if(z){ z.textContent=t; } }
 async function synchroMaintenant(){
   if(!enLigne()||!joueur.code||!joueur.prenom) return;
-  try{ const r=await rpc('mbot_envoyer',{p_code:joueur.code,p_prenom:joueur.prenom,p_classe:joueur.classe,p_xp:joueur.xp,p_etoiles:totalEtoiles(),p_ceintures:nbCeintures(),p_trophees:Object.keys(joueur.trophees).length,p_couleur:joueur.equip.couleur,p_chapeau:joueur.equip.chapeau});
+  try{ const r=await rpc('mbot_envoyer',{p_code:joueur.code,p_prenom:joueur.prenom,p_classe:joueur.classe,p_xp:joueur.xp,p_etoiles:totalEtoiles(),p_ceintures:nbCeintures(),p_trophees:Object.keys(joueur.trophees).length,p_couleur:joueur.equip.couleur,p_chapeau:joueur.equip.chapeau,p_temps:joueur.temps||{}});
     etatLigne(r==='ok'?'🌐':r==='code_inconnu'?'⚠️ code':'⚠️'); if(r==='code_inconnu') toast('Code de classe inconnu : vérifie-le avec ton professeur.');
   }catch(e){ etatLigne('📴'); }
 }
@@ -1436,12 +1454,50 @@ function dessinerChapeau(c,s,h,R){
   if(t==='fusee'){ c.fillStyle='#f8fafc'; c.strokeStyle='#334155'; c.lineWidth=1.5; c.beginPath(); c.moveTo(0,-s*0.12); c.quadraticCurveTo(s*0.1,s*0.05,s*0.08,s*0.32); c.lineTo(-s*0.08,s*0.32); c.quadraticCurveTo(-s*0.1,s*0.05,0,-s*0.12); c.fill(); c.stroke(); c.fillStyle='#3b82f6'; c.beginPath(); c.arc(0,s*0.08,s*0.035,0,7); c.fill(); c.fillStyle='#f97316'; c.beginPath(); c.moveTo(-s*0.05,s*0.32); c.lineTo(0,s*0.32+s*0.12*(0.7+0.3*Math.sin(now/60))); c.lineTo(s*0.05,s*0.32); c.fill(); }
 }
 
+
+/* =========================================================
+   CHRONOMÈTRE (mode programme) — temps passé pour réussir un circuit
+   ========================================================= */
+const CH={acc:0,debut:null,fini:false,valide:true};
+function chronoMs(){ return CH.acc+(CH.debut?performance.now()-CH.debut:0); }
+function fmtTemps(s){ s=Math.round(s); const m=Math.floor(s/60), r=s%60; return m+':'+(r<10?'0':'')+r; }
+function chronoReset(){ CH.acc=0; CH.debut=null; CH.fini=false; CH.valide=!edJeu.prog.length; }
+function chronoStart(){ if(!CH.debut&&!CH.fini) CH.debut=performance.now(); }
+function chronoPause(){ if(CH.debut){ CH.acc+=performance.now()-CH.debut; CH.debut=null; } }
+let chronoAff=0;
+function majChrono(){ const now=performance.now(); if(now-chronoAff<250) return; chronoAff=now;
+  const z=document.getElementById('chrono'); if(!z||!J.def) return; const rec=(joueur.temps||{})[J.def.id];
+  z.innerHTML='⏱ '+fmtTemps(chronoMs()/1000)+(rec?' <small>record '+fmtTemps(rec)+'</small>':'')+(CH.valide||J.def.custom?'':' <small>non classé</small>');
+  z.classList.toggle('pause',!CH.debut); z.style.display=J.def.custom?'none':''; }
+$('#bChrono').onclick=()=>confirmer('Nouvel essai chronométré : ton programme sera effacé et le chrono repart de zéro. On y va ?',()=>{ edJeu.prog=[]; edJeu.sel=-1; edJeu.changer(); reinit(); chronoReset(); chronoStart(); setMsg('⏱ C\'est parti ! Écris ton programme le plus vite possible.','info'); });
+/* nom officiel du collège à partir du code */
+async function verifierCode(){
+  if(!joueur.code||!enLigne()) return;
+  try{ const n=await rpc('mbot_etablissement',{p_code:joueur.code}); if(n){ joueur.college=n; sauver(); toast('🏫 '+esc(n),'xp'); } else toast('⚠️ Code du collège inconnu : vérifie-le avec ton professeur.'); }catch(e){}
+}
+/* ligue : classements anonymes des classes et des collèges */
+function tableLigue(rows,avecClasse){
+  if(!rows.length) return '<p class="aide">Pas encore assez de joueurs : il en faut au moins 3 par '+(avecClasse?'classe':'collège')+' pour apparaître.</p>';
+  return '<table class="clt ligue"><tr><th>#</th><th>Collège</th>'+(avecClasse?'<th>Classe</th>':'')+'<th class="num">Joueurs</th><th class="num">XP moyen</th><th class="num">Étoiles</th></tr>'
+   +rows.map((r,i)=>{ const moi=(joueur.college&&r.etablissement===joueur.college)&&(!avecClasse||String(r.classe).toUpperCase()===joueur.classe);
+     return '<tr class="'+(moi?'moi':'')+'"><td class="rang">'+(i<3?['🥇','🥈','🥉'][i]:i+1)+'</td><td class="nom">'+esc(r.etablissement)+'</td>'+(avecClasse?'<td>'+esc(r.classe)+'</td>':'')+'<td class="num">'+(+r.joueurs||0)+'</td><td class="num">'+(+r.xp_moyen||0)+'</td><td class="num">'+(+r.etoiles||0)+' ★</td></tr>'; }).join('')+'</table>';
+}
+let niveauChrono=null;
+function tableChrono(rows){
+  const ids=NIVEAUX.map(n=>n.id); if(niveauChrono===null){ let best=0,bi=0; ids.forEach((id,i)=>{ const c=rows.filter(r=>r.temps&&r.temps[id]).length; if(c>best){ best=c; bi=i; } }); niveauChrono=bi; }
+  const id=ids[niveauChrono], L=rows.filter(r=>r.temps&&+r.temps[id]>0).sort((a,b)=>a.temps[id]-b.temps[id]);
+  const sel='<label style="font-weight:700">Circuit : <select id="selChrono" class="btn">'+NIVEAUX.map((n,i)=>'<option value="'+i+'"'+(i===niveauChrono?' selected':'')+'>'+(i+1)+'. '+esc(n.titre)+'</option>').join('')+'</select></label>';
+  const t=!L.length?'<p class="aide">Personne n\'a encore de temps sur ce circuit. À toi de lancer le défi !</p>'
+   :'<table class="clt"><tr><th>#</th><th>Joueur</th><th>Classe</th><th class="num">Temps</th></tr>'+L.map((r,i)=>'<tr class="'+(r.prenom===joueur.prenom&&String(r.classe).toUpperCase()===joueur.classe?'moi':'')+'"><td class="rang">'+(i<3?['🥇','🥈','🥉'][i]:i+1)+'</td><td>'+esc(r.prenom)+'</td><td>'+esc(r.classe)+'</td><td class="num">⏱ '+fmtTemps(+r.temps[id])+'</td></tr>').join('')+'</table>';
+  return sel+t;
+}
+
 /* =========================================================
    BOUCLE D'AFFICHAGE
    ========================================================= */
 function rendu(){
   try{
-    if(ecranCourant==='jeu'&&J.M) dessiner($('#cv'),J.M,[J.R]);
+    if(ecranCourant==='jeu'&&J.M){ dessiner($('#cv'),J.M,[J.R]); majChrono(); }
     else if(ecranCourant==='duel'&&D.M) dessiner($('#cvD'),D.M,[D.A,D.B],{tick:D.mode==='tele'?D.ticks:D.A.ticks,h:0.62});
     else if(ecranCourant==='garage'){ const M=construireMonde({map:['...','.S.','...'],dir:0},0); G.ang+=0.6; const R=nouveauRobot(M,1,1,0); R.ang=G.ang; R.skin=G.apercu||joueur.equip; R.led='vert'; dessiner($('#cvG'),M,[R],{h:0.45}); }
     else if(ecranCourant==='atelier'&&AT.g){ const map=AT.g.map(l=>l.join('')); const M=construireMonde({map,dir:AT.dir,ligne:true},0); const s=M.start; dessiner($('#cvA'),M,s?[nouveauRobot(M,s.x,s.y,AT.dir)]:[],{h:0.6}); }
@@ -1453,7 +1509,7 @@ function rendu(){
    DÉMARRAGE SANS INSCRIPTION : circuit 1 en télécommande puis en programme,
    inscription proposée seulement après ces deux réussites
    ========================================================= */
-const INV={tele:false,prog:false,et:0};
+const INV={tele:false,prog:false,et:0,temps:0};
 function suiteInvite(){
   if(joueur.prenom) return;
   if(INV.tele&&INV.prog){ inscriptionInvite(); return; }
@@ -1463,12 +1519,12 @@ function suiteInvite(){
 }
 function inscriptionInvite(){
   const d=(()=>{ try{ return JSON.parse(store('mbotDernier')||'null')||{}; }catch(e){ return {}; } })(), v=x=>esc(x||'');
-  modale('<div class="victoire">🏆 Circuit 1 réussi deux fois !</div><div class="etoiles">'+'★'.repeat(INV.et)+'<span style="color:#e2e8f0">'+'★'.repeat(3-INV.et)+'</span></div>'
+  modale('<div class="victoire">🏆 Circuit 1 réussi deux fois !</div><div class="etoiles">'+'★'.repeat(INV.et)+'<span style="color:#e2e8f0">'+'★'.repeat(3-INV.et)+'</span></div>'+(INV.temps?'<p style="text-align:center;font-size:20px">⏱ Ton temps en programme : <b>'+fmtTemps(INV.temps)+'</b></p>':'')
    +'<p style="text-align:center;font-size:17px">En télécommande <b>et</b> en programme. Inscris-toi pour <b>garder tes étoiles</b> et débloquer les 16 autres circuits, le garage, les trophées et le classement.</p>'
    +'<div class="invite"><label for="mPrenom">Prénom + initiale du nom</label><input id="mPrenom" maxlength="20" placeholder="ex. Léa M." value="'+v(d.prenom)+'">'
    +'<label for="mClasse">Classe</label><input id="mClasse" maxlength="12" placeholder="ex. 3_GOYA" value="'+v(d.classe)+'">'
    +'<label for="mEtab">Établissement</label><input id="mEtab" maxlength="40" value="'+v(d.etab)+'">'
-   +'<label for="mCode">Code de classe <small style="font-weight:400">(donné par ton prof — facultatif)</small></label><input id="mCode" maxlength="30" value="'+v(d.code)+'"></div>'
+   +'<label for="mCode">Code du collège <small style="font-weight:400">(donné par ton prof — facultatif)</small></label><input id="mCode" maxlength="30" value="'+v(d.code)+'"></div>'
    +'<p class="aide">🔒 Seulement ton prénom avec l\'initiale, ta classe et ton établissement. Pas de nom de famille, pas d\'e-mail, pas de mot de passe.</p>'
    +'<p style="text-align:center"><button class="gros" id="mGo">🚀 Je m\'inscris et je continue</button></p>');
   $('#mPrenom').focus();
@@ -1480,7 +1536,8 @@ function appliquerInvite(){
   const id=NIVEAUX[0].id, av=joueur.etoiles[id]||0;
   if(INV.prog){ if(av===0) gagner(60,10,'Circuit 1 réussi'); if(INV.et>av){ joueur.etoiles[id]=INV.et; gagner(40*(INV.et-av),10*(INV.et-av),(INV.et-av)+' étoile(s) gardée(s)'); } }
   if(INV.tele&&!joueur.tele[id]){ joueur.tele[id]=true; gagner(15,5,'Réussi en télécommande'); }
-  INV.tele=INV.prog=false; INV.et=0; verifierTrophees();
+  if(INV.temps){ joueur.temps=joueur.temps||{}; const id0=NIVEAUX[0].id; if(!joueur.temps[id0]||INV.temps<joueur.temps[id0]) joueur.temps[id0]=INV.temps; }
+  INV.tele=INV.prog=false; INV.et=0; INV.temps=0; verifierTrophees();
 }
 function demarrageInvite(){
   J.mode='tele'; ouvrirNiveau(0);
