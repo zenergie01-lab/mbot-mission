@@ -41,7 +41,7 @@ header .who{margin-left:auto;font-size:13px;display:flex;gap:8px;align-items:cen
 .titreN{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .titreN h2{margin:0;font-size:21px}
 .pastille{border-radius:99px;padding:2px 10px;font-size:12px;font-weight:800;background:var(--c);color:var(--t,#1e293b)}
-.consigne{font-size:15px;margin:6px 0;line-height:1.35}
+.consigne{font-size:22px;font-weight:700;margin:8px 0 6px;line-height:1.3;color:#0f172a}
 .analogie{font-size:13.5px;background:#f8fafc;border-left:5px solid #a5b4fc;padding:5px 10px;border-radius:6px;margin:4px 0}
 .taches{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;font-weight:600;margin:4px 0}
 .taches .ok{color:var(--ok)}
@@ -51,7 +51,12 @@ canvas{display:block;border-radius:10px;background:#cbd5e1;max-width:100%}
 .bascule{display:inline-flex;border-radius:10px;overflow:hidden;border:2px solid #4f46e5}
 .bascule button{border:0;padding:7px 12px;background:#fff;color:#4f46e5;font-weight:700}
 .bascule button.on{background:#4f46e5;color:#fff}
-.msg{min-height:30px;margin-top:8px;padding:7px 12px;border-radius:10px;font-size:15px;font-weight:600;background:var(--fond)}
+.msg{min-height:30px;margin-top:8px;padding:8px 14px;border-radius:10px;font-size:17px;font-weight:600;background:var(--fond)}
+.analogie{font-size:15px}
+#ctrlProg{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:8px;margin:10px 0 4px}
+#ctrlProg .btn{font-size:18px;padding:12px 10px;font-weight:800}
+.invite input{font:inherit;font-size:17px;padding:8px 10px;border:2px solid #cbd5e1;border-radius:10px;width:100%}
+.invite label{display:block;margin:8px 0 3px;font-weight:700}
 .msg.ok{background:#dcfce7;color:#14532d}.msg.ko{background:#fee2e2;color:#7f1d1d}.msg.info{background:#e0e7ff;color:#312e81}
 .touches{font-size:13px;color:#475569;margin-top:6px;line-height:1.6}
 kbd{display:inline-block;border:1.5px solid #94a3b8;border-bottom-width:3px;border-radius:5px;padding:0 6px;font-family:inherit;font-size:12px;background:#fff}
@@ -165,7 +170,7 @@ table.clt .num{text-align:right;white-space:nowrap}table.clt tr.moi td{backgroun
     <div class="plateau"><canvas id="cv"></canvas></div>
     <div class="barre">
       <span class="bascule"><button id="mTele">🎮 Télécommande</button><button id="mProg" class="on">🧩 Programme</button></span>
-      <span id="ctrlProg" style="display:inline-flex;gap:6px;flex-wrap:wrap">
+      <span id="ctrlProgOrigine"></span><span id="ctrlProg">
         <button class="btn v" id="bLancer">▶ Lancer</button><button class="btn" id="bPas">⏭ Pas à pas</button><button class="btn r" id="bStop">⏹ Stop</button>
       </span>
       <button class="btn" id="bReset">↺ Remettre au départ</button>
@@ -691,7 +696,7 @@ function charger(){ const base=profilVide(); let d={}; try{ d=JSON.parse(store(c
 function debloque(i){ return joueur.prof||i===0||(joueur.etoiles[NIVEAUX[i-1].id]||0)>=1; }
 function ceintureObtenue(k){ return NIVEAUX.filter(n=>n.ce===k).every(n=>(joueur.etoiles[n.id]||0)>=1); }
 function majEntete(){
-  $('#quiNom').textContent=joueur.prenom?(joueur.prenom+(joueur.classe?' · '+joueur.classe:'')):'';
+  $('#quiNom').textContent=joueur.prenom?(joueur.prenom+(joueur.classe?' · '+joueur.classe:'')):'👤 Déjà inscrit ? Se connecter';
   majJoueurBadge();
   $('#ceintures').innerHTML=CEINTURES.map((c,k)=>'<i title="'+c.nom+'" class="'+(ceintureObtenue(k)?'on':'')+'" style="background:'+c.c+'"></i>').join('');
 }
@@ -703,10 +708,11 @@ let ecranCourant='accueil';
 function montrer(e){ ecranCourant=e; document.querySelectorAll('.ecran').forEach(s=>s.classList.toggle('on',s.id==='e-'+e)); document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.e===e||(e==='jeu'&&b.dataset.e==='niveaux'))); if(e==='niveaux') afficherCarte(); if(e==='duel') duelInit(); if(e==='atelier') atelierInit(); if(e==='garage') afficherGarage(); if(e==='trophees') afficherTrophees(); if(e==='classement') afficherClassement(); arreter(); }
 document.querySelectorAll('#cltOnglets button').forEach(b=>b.onclick=()=>{ ongletClt=b.dataset.o; afficherClassement(); });
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ if(!joueur.prenom&&b.dataset.e!=='aide'){ montrer('accueil'); return; } montrer(b.dataset.e); });
-$('#bEntrer').onclick=()=>{ const p=$('#iPrenom').value.trim().replace(/\s+/g,' '); if(!p){ $('#iPrenom').focus(); return; }
+function entrer(){ const p=$('#iPrenom').value.trim().replace(/\s+/g,' '); if(!p){ $('#iPrenom').focus(); return; }
   joueur.prenom=p; joueur.classe=$('#iClasse').value.trim().toUpperCase(); joueur.etab=$('#iEtab').value.trim(); joueur.code=$('#iCode').value.trim().toUpperCase();
   store('mbotDernier',JSON.stringify({prenom:joueur.prenom,classe:joueur.classe,etab:joueur.etab,code:joueur.code}));
-  charger(); sauver(); majEntete(); montrer('niveaux'); toast('Bienvenue '+esc(p)+' ! Niveau '+niveauDe(joueur.xp)+' · '+titreDe(niveauDe(joueur.xp)),'xp'); synchroMaintenant(); };
+  charger(); appliquerInvite(); sauver(); majEntete(); montrer('niveaux'); toast('Bienvenue '+esc(p)+' ! Niveau '+niveauDe(joueur.xp)+' · '+titreDe(niveauDe(joueur.xp)),'xp'); synchroMaintenant(); }
+$('#bEntrer').onclick=entrer;
 try{ const d=JSON.parse(store('mbotDernier')||'null'); if(d){ $('#iPrenom').value=d.prenom||''; $('#iClasse').value=d.classe||''; $('#iEtab').value=d.etab||''; $('#iCode').value=d.code||''; } }catch(e){}
 $('#iEtab').onkeydown=e=>{ if(e.key==='Enter') $('#iCode').focus(); };
 $('#iCode').onkeydown=e=>{ if(e.key==='Enter') $('#bEntrer').click(); };
@@ -737,7 +743,9 @@ function afficherCarte(){
    ========================================================= */
 let nbIndices=0;
 const J={idx:0,def:null,var:0,M:null,R:null,mode:'prog',gen:null,timer:null,ctx:null,gestes:[],fini:false};
+const CTRL_EL=document.getElementById('ctrlProg');
 const edJeu=new Editeur($('#edJeu'),{onChange:()=>{ if(J.def&&J.def.id) store('mbotProg_'+cleJoueur()+'_'+J.def.id,JSON.stringify(edJeu.prog.map(({id,...b})=>b))); },extra:el=>{
+  if(CTRL_EL) el.appendChild(CTRL_EL);
   const b=document.createElement('div'); b.className='barre';
   const t=document.createElement('button'); t.className='btn'; t.textContent='🤖 Pour le vrai mBot'; t.onclick=()=>traduire(edJeu.prog); b.appendChild(t);
   const ind=document.createElement('button'); ind.className='btn o'; ind.textContent='💡 Coup de pouce'; ind.onclick=()=>indice(); b.appendChild(ind);
@@ -772,7 +780,7 @@ function setMsg(t,cls){ const m=$('#msg'); m.textContent=t; m.className='msg '+(
 function duree(){ return [0,650,420,260,140,60][+$('#vitesse').value]; }
 function choisirMode(m){
   J.mode=m; $('#mTele').classList.toggle('on',m==='tele'); $('#mProg').classList.toggle('on',m==='prog');
-  $('#ctrlProg').style.display=m==='prog'?'inline-flex':'none'; $('#touches').style.display=m==='tele'?'':'none'; if(m==='tele'&&document.activeElement) document.activeElement.blur();
+  CTRL_EL.style.display=m==='prog'?'grid':'none'; $('#touches').style.display=m==='tele'?'':'none'; if(m==='tele'&&document.activeElement) document.activeElement.blur();
   reinit(); setMsg(m==='tele'?'Mode télécommande : pilote avec le clavier. Tes gestes sont notés.':'Mode programme : écris toute la recette, puis ▶ Lancer.','info');
 }
 $('#mTele').onclick=()=>choisirMode('tele'); $('#mProg').onclick=()=>choisirMode('prog');
@@ -819,6 +827,7 @@ function victoire(){
   if(n>1 && tous<n){ setMsg('✅ Réussi sur ce circuit… mais ton programme ne marche que sur '+tous+' circuit(s) sur '+n+'. Il doit marcher partout : utilise les capteurs !','ko'); return; }
   const et=def.custom?3:etoiles(nb,def.par), avant=joueur.etoiles[def.id]||0;
   if(!def.custom){ joueur.etoiles[def.id]=Math.max(avant,et); sauver(); }
+  if(!joueur.prenom&&!def.custom){ INV.prog=true; INV.et=Math.max(INV.et,et); setMsg('🏆 Programme réussi : le robot est allé seul au drapeau !','ok'); suiteInvite(); return; }
   recompenserVictoire(def,nb,et,avant);
   setMsg('🏆 Mission réussie !'+(n>1?' Ton programme marche sur les '+n+' circuits : c\'est un vrai algorithme.':''),'ok');
   const suivant=J.idx+1<NIVEAUX.length&&!def.custom;
@@ -844,7 +853,8 @@ function teleAction(a){
   J.gestes.push(a); animer(R,avant,Math.max(120,duree()*0.8)); effetAction(R,{type:'action',a,res}); majTaches();
   setMsg(J.gestes.length+' geste(s).','info');
   if(gagne(J.M,R)){ R.gagne=true; J.fini=true; effetAction(R,{type:'gagne'}); majTaches(); if(!J.def.custom){ const neuf=!joueur.tele[J.def.id]; joueur.tele[J.def.id]=true; sauver(); if(neuf) gagner(15,5,'Réussi en télécommande'); verifierTrophees(); }
-    setMsg('🎮 Réussi en pilotage avec '+J.gestes.length+' gestes ! Maintenant, le vrai défi : transforme tes gestes en programme, puis raccourcis-le.','ok'); }
+    setMsg('🎮 Réussi en pilotage avec '+J.gestes.length+' gestes ! Maintenant, le vrai défi : transforme tes gestes en programme, puis raccourcis-le.','ok');
+    if(!joueur.prenom&&!J.def.custom){ INV.tele=true; setTimeout(suiteInvite,700); } }
 }
 $('#bGestes').onclick=()=>{
   if(!J.gestes.length){ setMsg('Pilote d\'abord le robot avec le clavier.','ko'); return; }
@@ -1306,7 +1316,46 @@ function rendu(){
   }catch(e){ console.error(e); }
   requestAnimationFrame(rendu);
 }
-majEntete(); requestAnimationFrame(rendu);
+
+/* =========================================================
+   DÉMARRAGE SANS INSCRIPTION : circuit 1 en télécommande puis en programme,
+   inscription proposée seulement après ces deux réussites
+   ========================================================= */
+const INV={tele:false,prog:false,et:0};
+function suiteInvite(){
+  if(joueur.prenom) return;
+  if(INV.tele&&INV.prog){ inscriptionInvite(); return; }
+  if(INV.tele) modale('<div class="victoire">🎮 Bravo, pilote !</div><p style="font-size:18px;text-align:center">Tu as conduit le robot jusqu\'au drapeau.<br>Maintenant, <b>programme-le</b> : il doit y aller <b>tout seul</b>, sans télécommande.</p><p style="text-align:center;font-size:16px">Clique sur <b>↑ Avancer</b>, choisis le bon nombre de cases, puis <b>▶ Lancer</b>.</p><p style="text-align:center"><button class="gros" id="iSuite">🧩 Écrire le programme</button></p>');
+  else modale('<div class="victoire">🧩 Bravo, programmeur !</div><p style="font-size:18px;text-align:center">Ton programme a guidé le robot tout seul.<br>Essaie maintenant de le <b>piloter</b> toi-même avec les flèches du clavier.</p><p style="text-align:center"><button class="gros" id="iSuite">🎮 Piloter le robot</button></p>');
+  $('#iSuite').onclick=()=>{ fermerModale(); choisirMode(INV.tele?'prog':'tele'); setMsg(INV.tele?'🧩 Écris le programme à droite, puis clique sur ▶ Lancer.':'🎮 Utilise les flèches du clavier : ⬆️ avancer, ⬅️ ➡️ tourner.','info'); };
+}
+function inscriptionInvite(){
+  const d=(()=>{ try{ return JSON.parse(store('mbotDernier')||'null')||{}; }catch(e){ return {}; } })(), v=x=>esc(x||'');
+  modale('<div class="victoire">🏆 Circuit 1 réussi deux fois !</div><div class="etoiles">'+'★'.repeat(INV.et)+'<span style="color:#e2e8f0">'+'★'.repeat(3-INV.et)+'</span></div>'
+   +'<p style="text-align:center;font-size:17px">En télécommande <b>et</b> en programme. Inscris-toi pour <b>garder tes étoiles</b> et débloquer les 16 autres circuits, le garage, les trophées et le classement.</p>'
+   +'<div class="invite"><label for="mPrenom">Prénom + initiale du nom</label><input id="mPrenom" maxlength="20" placeholder="ex. Léa M." value="'+v(d.prenom)+'">'
+   +'<label for="mClasse">Classe</label><input id="mClasse" maxlength="12" placeholder="ex. 3_GOYA" value="'+v(d.classe)+'">'
+   +'<label for="mEtab">Établissement</label><input id="mEtab" maxlength="40" value="'+v(d.etab)+'">'
+   +'<label for="mCode">Code de classe <small style="font-weight:400">(donné par ton prof — facultatif)</small></label><input id="mCode" maxlength="30" value="'+v(d.code)+'"></div>'
+   +'<p class="aide">🔒 Seulement ton prénom avec l\'initiale, ta classe et ton établissement. Pas de nom de famille, pas d\'e-mail, pas de mot de passe.</p>'
+   +'<p style="text-align:center"><button class="gros" id="mGo">🚀 Je m\'inscris et je continue</button></p>');
+  $('#mPrenom').focus();
+  const go=()=>{ if(!$('#mPrenom').value.trim()){ $('#mPrenom').focus(); return; } $('#iPrenom').value=$('#mPrenom').value; $('#iClasse').value=$('#mClasse').value; $('#iEtab').value=$('#mEtab').value; $('#iCode').value=$('#mCode').value; fermerModale(); entrer(); };
+  $('#mGo').onclick=go; ['mPrenom','mClasse','mEtab','mCode'].forEach(id=>{ $('#'+id).onkeydown=e=>{ if(e.key==='Enter') go(); }; });
+}
+function appliquerInvite(){
+  if(!INV.tele&&!INV.prog) return;
+  const id=NIVEAUX[0].id, av=joueur.etoiles[id]||0;
+  if(INV.prog){ if(av===0) gagner(60,10,'Circuit 1 réussi'); if(INV.et>av){ joueur.etoiles[id]=INV.et; gagner(40*(INV.et-av),10*(INV.et-av),(INV.et-av)+' étoile(s) gardée(s)'); } }
+  if(INV.tele&&!joueur.tele[id]){ joueur.tele[id]=true; gagner(15,5,'Réussi en télécommande'); }
+  INV.tele=INV.prog=false; INV.et=0; verifierTrophees();
+}
+function demarrageInvite(){
+  J.mode='tele'; ouvrirNiveau(0);
+  setMsg('👋 Bienvenue ! Conduis le robot jusqu\'au drapeau 🏁 avec les flèches du clavier : ⬆️ avancer, ⬅️ ➡️ tourner.','info');
+}
+
+majEntete(); requestAnimationFrame(rendu); demarrageInvite();
 
 /* accès pour les tests automatiques */
 window.MBOT={NIVEAUX,DUELS,simuler,compiler,construireMonde};
